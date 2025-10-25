@@ -1,0 +1,95 @@
+﻿namespace Lumora.Services.Core.Messages
+{
+    public class AuthenticationMessage(ILocalizationManager localization) : GeneralMessage(localization)
+    {
+        private readonly ILocalizationManager _localization = localization;
+
+        // MESSAGES
+        public string GetLoginErrorMessage(string value) => _localization.GetLocalizedString("LoginError", value);
+        public string MsgUserDeletedOrInactive => _localization.GetLocalizedString("UserDeletedOrInactive");
+        public string MsgUserProfileFailed => _localization.GetLocalizedString("UserProfileFailed");
+        public string MsgUserProfileCompleted => _localization.GetLocalizedString("UserProfileCompleted");
+        public string MsgUserProfileUpdateFailed => _localization.GetLocalizedString("UserProfileUpdateFailed");
+        public string MsgUserProfileUpdated => _localization.GetLocalizedString("UserProfileUpdated");
+        public string MsgPhoneNumberRequired => _localization.GetLocalizedString("PhoneNumberRequired");
+        public string MsgPhoneNumberSame => _localization.GetLocalizedString("PhoneNumberSame");
+        public string MsgPhoneNumberNotAvilable => _localization.GetLocalizedString("PhoneNumberNotAvilable");
+        public string MsgPhoneNumberChanged => _localization.GetLocalizedString("PhoneNumberChanged");
+        public string MsgAccountAlreadyActivated => _localization.GetLocalizedString("AccountAlreadyActivated");
+        public string MsgUserAccountAlreadyActivated => _localization.GetLocalizedString("UserAccountAlreadyActivated");
+        public string MsgAccountActivationFailed => _localization.GetLocalizedString("AccountActivationFailed");
+        public string MsgAccountActivated => _localization.GetLocalizedString("AccountActivated");
+        public string MsgAccountInactive => _localization.GetLocalizedString("AccountInactive");
+        public string MsgAccountAlreadyDeactivated => _localization.GetLocalizedString("AccountAlreadyDeactivated");
+        public string MsgAccountDeactivated => _localization.GetLocalizedString("AccountDeactivated");
+        public string MsgPhoneNumberOrUserIdRequired => _localization.GetLocalizedString("PhoneNumberOrUserIdRequired");
+        public string MsgPhoneNotConfirmed => _localization.GetLocalizedString("PhoneNotConfirmed");
+        public string MsgPhoneAlreadyConfirmed => _localization.GetLocalizedString("PhoneAlreadyConfirmed");
+        public string MsgPhoneConfirmationSent => _localization.GetLocalizedString("PhoneConfirmationSent");
+        public string MsgEmailRequired => _localization.GetLocalizedString("EmailRequired");
+        public string MsgEmailAlreadyConfirmed => _localization.GetLocalizedString("EmailAlreadyConfirmed");
+        public string MsgEmailConfirmationFailed => _localization.GetLocalizedString("EmailConfirmationFailed");
+        public string MsgEmailConfirmationSent => _localization.GetLocalizedString("EmailConfirmationSent");
+        public string MsgUserIdAndVerificationCodeRequired => _localization.GetLocalizedString("UserIdAndVerificationCodeRequired");
+        public string MsgInvalidOrExpiredCode => _localization.GetLocalizedString("InvalidOrExpiredCode");
+        public string MsgPhoneNumberConfirmationFailed => _localization.GetLocalizedString("PhoneNumberConfirmationFailed");
+        public string MsgPhoneNumberConfirmed => _localization.GetLocalizedString("PhoneNumberConfirmed");
+        public string MsgUserIdAndConfirmationTokenRequired => _localization.GetLocalizedString("UserIdAndConfirmationTokenRequired");
+        public string MsgEmailConfirmed => _localization.GetLocalizedString("EmailConfirmed");
+        public string MsgRefreshTokenRequired => _localization.GetLocalizedString("RefreshTokenRequired");
+        public string MsgInvalidOrExpiredRefreshToken => _localization.GetLocalizedString("InvalidOrExpiredRefreshToken");
+        public string MsgUserInvalidOrInactive => _localization.GetLocalizedString("UserInvalidOrInactive");
+        public string MsgTokenRefreshed => _localization.GetLocalizedString("TokenRefreshed");
+        public string MsgTwoFASetupInfoGenerated => _localization.GetLocalizedString("TwoFASetupInfoGenerated");
+        public string MsgTwoFADisabled => _localization.GetLocalizedString("TwoFADisabled");
+        public string MsgTwoFADisableFailed => _localization.GetLocalizedString("TwoFADisableFailed");
+        public string MsgTwoFAEnabled => _localization.GetLocalizedString("TwoFAEnabled");
+        public string MsgTwoFAEnableFailed => _localization.GetLocalizedString("TwoFAEnableFailed");
+        public string MsgAppVerificationCodeMissing => _localization.GetLocalizedString("AppVerificationCodeMissing");
+        public string MsgInvalid2FAToken => _localization.GetLocalizedString("Invalid2FAToken");
+        public string MsgPasswordResetFailed => _localization.GetLocalizedString("PasswordResetFailed");
+        public string MsgPasswordResetSuccessful => _localization.GetLocalizedString("PasswordResetSuccessful");
+        public string MsgPasswordResetTokenGenerationFailed => _localization.GetLocalizedString("PasswordResetTokenGenerationFailed");
+        public string MsgForgotPasswordEmailSent => _localization.GetLocalizedString("ForgotPasswordEmailSent");
+        public string MsgPasswordNotMatch => _localization.GetLocalizedString("PasswordNotMatch");
+        public string MsgPasswordChangeFailed => _localization.GetLocalizedString("PasswordChangeFailed");
+        public string MsgPasswordChanged => _localization.GetLocalizedString("PasswordChanged");
+        public string MsgLogoutSuccessful => _localization.GetLocalizedString("LogoutSuccessful");
+        public string MsgTwoFANotEnabled => _localization.GetLocalizedString("TwoFANotEnabled");
+        public string MsgVerificationCodeRequired => _localization.GetLocalizedString("VerificationCodeRequired");
+        public string MsgInvalidVerificationCode => _localization.GetLocalizedString("InvalidVerificationCode");
+        public string MsgLoginSuccessful => _localization.GetLocalizedString("LoginSuccessful");
+        public string MsgTooManyRequests => _localization.GetLocalizedString("TooManyRequests");
+        public string MsgInvalidCredentials => _localization.GetLocalizedString("InvalidCredentials");
+        public string MsgTwoFACodeRequired => _localization.GetLocalizedString("TwoFACodeRequired");
+        public string MsgUserRegistered => _localization.GetLocalizedString("UserRegistered");
+        public string MsgUserRegistrationFailed => _localization.GetLocalizedString("UserRegistrationFailed");
+        public string MsgUserProfileRetrieved => _localization.GetLocalizedString("UserProfileRetrieved");
+        public string MsgNoUsers => _localization.GetLocalizedString("NoUsers");
+        public string MsgAllUsersRetrieved => _localization.GetLocalizedString("AllUsersRetrieved");
+        public string MsgFullNameRequired => _localization.GetLocalizedString("FullNameRequired");
+        public string MsgFullNameLettersOnly => _localization.GetLocalizedString("FullNameLettersOnly");
+        public string MsgCityRequired => _localization.GetLocalizedString("CityRequired");
+        public string MsgCityLettersOnly => _localization.GetLocalizedString("CityLettersOnly");
+        public string MsgSexRequired => _localization.GetLocalizedString("SexRequired");
+        public string MsgSexLettersOnly => _localization.GetLocalizedString("SexLettersOnly");
+        public string MsgPhoneRequired => _localization.GetLocalizedString("PhoneRequired");
+        public string MsgInvalidPhone => _localization.GetLocalizedString("InvalidPhone");
+        public string MsgInvalidEmail => _localization.GetLocalizedString("InvalidEmail");
+        public string MsgPasswordRequired => _localization.GetLocalizedString("PasswordRequired");
+        public string MsgPasswordWeak => _localization.GetLocalizedString("PasswordWeak");
+        public string MsgConfirmPasswordRequired => _localization.GetLocalizedString("ConfirmPasswordRequired");
+        public string MsgPasswordMismatch => _localization.GetLocalizedString("PasswordMismatch");
+        public string MsgCurrentPasswordRequired => _localization.GetLocalizedString("CurrentPasswordRequired");
+        public string MsgNewPasswordRequired => _localization.GetLocalizedString("NewPasswordRequired");
+        public string MsgTokenRequired => _localization.GetLocalizedString("TokenRequired");
+        public string MsgAppVerificationCodeRequired => _localization.GetLocalizedString("AppVerificationCodeRequired");
+        public string MsgTwoFactorCodeRequired => _localization.GetLocalizedString("TwoFactorCodeRequired");
+        public string MsgUserIdRequired => _localization.GetLocalizedString("UserIdRequired");
+        public string MsgDateOfBirthInvalid => _localization.GetLocalizedString("DateOfBirthInvalid");
+        public string MsgAboutMeRequired => _localization.GetLocalizedString("AboutMeRequired");
+        public string MsgAboutMeInvalid => _localization.GetLocalizedString("AboutMeInvalid");
+        public string MsgAvatarInvalid => _localization.GetLocalizedString("AvatarInvalid");
+        public string MsgCourseTitleUnavailable => _localization.GetLocalizedString("CourseTitleUnavailable");
+    }
+}

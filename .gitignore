@@ -1,0 +1,74 @@
+# =====================
+# .NET Core
+# =====================
+
+# Build directories
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider IDE
+.idea/
+*.iml
+
+# Visual Studio
+.vs/
+*.VC.db
+*.VC.VC.opendb
+*.pdb
+*.opendb
+*.log
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# ASP.NET / EF Core
+appsettings.Development.json
+appsettings.Secret.json
+secrets.json
+
+# =====================
+# Node / Frontend (if using React/JS)
+# =====================
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =====================
+# Logs
+# =====================
+*.log
+logs/
+
+# =====================
+# OS Files
+# =====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =====================
+# Coverage & Test Results
+# =====================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# =====================
+# JetBrains IDE
+# =====================
+.idea/
+*.sln.iml

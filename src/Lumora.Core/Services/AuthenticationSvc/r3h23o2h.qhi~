@@ -1,0 +1,1250 @@
+﻿using FluentValidation;
+using Lumora.DTOs.Authentication;
+using Lumora.DTOs.Token;
+namespace Lumora.Services.Authentication
+{
+    public class AuthenticationService(
+        PgDbContext dbContext,
+        ILogger<AuthenticationService> logger,
+        IMapper mapper,
+        UserManager<User> userManager,
+        IRoleService roleService,
+        IUserService userService,
+        CustomSignInManager<User> signInManager,
+        ITokenService tokenService,
+        AuthenticationMessage messages,
+        IOptions<JwtConfig> jwtConfig,
+        IEmailConfirmation emailConfirmation,
+        RoleMessages roleMessages,
+        IPermissionService permissionService) : IAuthenticationService
+    {
+        protected readonly PgDbContext _dbContext = dbContext;
+        private readonly ILogger<AuthenticationService> _logger = logger;
+        private readonly IMapper _mapper = mapper;
+        private readonly UserManager<User> _userManager = userManager;
+        private readonly IRoleService _roleService = roleService;
+        private readonly CustomSignInManager<User> _signInManager = signInManager;
+        private readonly ITokenService _tokenService = tokenService;
+        private readonly IOptions<JwtConfig> _jwtConfig = jwtConfig;
+        private readonly IEmailConfirmation _emailConfirmation = emailConfirmation;
+        private readonly IPermissionService _permissionService = permissionService;
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken)
+        {
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                var isAnyUser = await userService.ExsistByPhoneNumberAsync(dto.PhoneNumber);
+                if (isAnyUser)
+                {
+                    return new GeneralResult(false, messages.MsgPhoneNumberNotAvilable, null, ErrorType.BadRequest);
+                }
+
+                if (dto.Password != dto.ConfirmPassword)
+                {
+                    return new GeneralResult(false, messages.MsgPasswordNotMatch, null, ErrorType.BadRequest);
+                }
+
+                var newUser = _mapper.Map<User>(dto);
+                newUser.UserName = dto.PhoneNumber;
+                newUser.PhoneNumberConfirmed = true; // temp
+
+                var createResult = await _userManager.CreateAsync(newUser, dto.Password!);
+                if (!createResult.Succeeded)
+                {
+                    var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                    _logger.LogError("Error creating user with phoneNumber={PhoneNumber} - {Errors}", dto.PhoneNumber, errors);
+                    return new GeneralResult(false, messages.MsgUserRegistrationFailed, null, ErrorType.BadRequest);
+                }
+
+                if ((await _roleService.IsUserInRoleAsync(newUser.Id, AppRoles.User, cancellationToken)).Data == false)
+                {
+                    if ((await _roleService.AssignRoleAsync(newUser.Id, AppRoles.User)).IsSuccess == false)
+                    {
+                        _logger.LogWarning("RegisterAsync - Failed to assign User role. UserId: {UserId}", newUser.Id);
+                        await transaction.RollbackAsync(cancellationToken);
+                        return new GeneralResult(false, roleMessages.MsgAssignRoleFailed, null, ErrorType.InternalServerError);
+                    }
+                }
+
+                // TODO: Send OTP
+
+                //try
+                //{
+                //    var (otp, expireAt) = await _otpService.GenerateAndSendOtpAsync(newUser.Id, dto.PhoneNumber!);
+                //    _logger.LogInformation("OTP {Otp} sent to {PhoneNumber} and will expire at {ExpireAt}", otp, dto.PhoneNumber, expireAt);
+                //}
+                //catch (Exception ex)
+                //{
+                //    _logger.LogError(ex, "Failed to send OTP to {PhoneNumber}.", dto.PhoneNumber);
+                //    throw new InvalidOperationException("Failed to send OTP. Please try again.");
+                //}
+
+                _dbContext.SaveChanges();
+                await transaction.CommitAsync(cancellationToken);
+
+                var user = new UserProfileDto
+                {
+                    Id = newUser.Id,
+                    FullName = dto.FullName,
+                    PhoneNumber = dto.PhoneNumber,
+                    Email = dto.Email,
+                    City = dto.City,
+                    Sex = dto.Sex
+                };
+                
+                _logger.LogInformation("User {UserId} created successfully.", newUser.Id);
+                return new GeneralResult(true, messages.MsgUserRegistered, user, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error registering user with phoneNumber={PhoneNumber}", dto.PhoneNumber);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage("register user."), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> LoginAsync(LoginDto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserWithoutPhoneNumberConfirmedAsync(cancellationToken, dto.PhoneNumber, null);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("LoginWith2FACode : User not found or deleted or inactive. PhoneNumber={PhoneNumber}", dto.PhoneNumber);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                if (!user.Data.PhoneNumberConfirmed)
+                {
+                    _logger.LogInformation("Phone number is not confirmed for user {PhoneNumber}.", dto.PhoneNumber);
+                    return new GeneralResult(false, messages.MsgPhoneNotConfirmed, null, ErrorType.BadRequest);
+
+                    // TODO: Send SMS confirmation
+                }
+
+                var signResult = await _signInManager.CheckPasswordSignInAsync(user.Data, dto.Password, true);
+                if (!signResult.Succeeded)
+                {
+                    if (signResult.IsLockedOut)
+                    {
+                        _logger.LogWarning("Too many requests for user {PhoneNumber}.", dto.PhoneNumber);
+                        return new GeneralResult(false, messages.MsgTooManyRequests, null, ErrorType.BadRequest);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid credentials for user {PhoneNumber}.", dto.PhoneNumber);
+                        return new GeneralResult(false, messages.MsgInvalidCredentials, null, ErrorType.BadRequest);
+                    }
+                }
+
+                if (await _userManager.GetTwoFactorEnabledAsync(user.Data))
+                {
+                    _logger.LogInformation("2FA is enabled for user {PhoneNumber}. Awaiting verification code.", dto.PhoneNumber);
+                    return new GeneralResult(false, messages.MsgTwoFACodeRequired, new { RequiresTwoFactor = true, UserId = user.Data.Id });
+                }
+
+                var tokenResult = await IssueTokensAsync(user.Data);
+                if (tokenResult.IsSuccess == false) return tokenResult;
+
+                var tokenDto = (TokenDto)tokenResult.Data!;
+                _logger.LogInformation("Login successful for user {PhoneNumber}.", dto.PhoneNumber);
+                return new GeneralResult(true, messages.MsgLoginSuccessful, tokenDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during login for PhoneNumber {PhoneNumber}.", dto.PhoneNumber);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" login"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> LoginWith2FACodeAsync(Login2FADto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserAsync(cancellationToken, null, null, dto.UserId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("LoginWith2FACode : User not found or deleted or inactive. ID={userId}", dto.UserId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                if (!await _userManager.GetTwoFactorEnabledAsync(user.Data))
+                {
+                    _logger.LogWarning("2FA login attempt for user without 2FA enabled. UserId: {UserId}", dto.UserId);
+                    return new GeneralResult(false, messages.MsgTwoFANotEnabled, null, ErrorType.BadRequest);
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.VerificationCode))
+                {
+                    _logger.LogWarning("Verification code is required for 2FA login. UserId: {UserId}", dto.UserId);
+                    return new GeneralResult(false, messages.MsgVerificationCodeRequired, null, ErrorType.BadRequest);
+                }
+
+                var isValid = await VerifyTwoFactorCodeAsync(user.Data, dto.VerificationCode);
+                if (isValid.IsSuccess == false)
+                {
+                    _logger.LogWarning("Invalid 2FA code for user {UserId}.", dto.UserId);
+                    return new GeneralResult(false, isValid.Message ?? messages.MsgInvalidVerificationCode, null, isValid.ErrorType);
+                }
+
+                // Code is valid → generate tokens
+                var tokenResult = await IssueTokensAsync(user.Data);
+                if (tokenResult.IsSuccess == false) return tokenResult;
+
+                var tokenDto = (TokenDto)tokenResult.Data!;
+                _logger.LogInformation("Login successful for user {PhoneNumber}.", user.Data.PhoneNumber);
+                return new GeneralResult(true, messages.MsgLoginSuccessful, tokenDto, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during 2FA login for user {UserId}.", dto.UserId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" login with 2FA."), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> LogoutAsync(string userId, string refreshToken, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("logout : User not found or deleted or inactive. ID={userId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                // Revoke the Refresh Token sent.
+                if (!string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    var hashed = _tokenService.HashRefreshToken(refreshToken);
+                    var token = await _dbContext.RefreshTokens.FirstOrDefaultAsync(r =>
+                        r.UserId == userId && r.TokenHash == hashed && !r.IsUsed && !r.IsRevoked);
+
+                    if (token != null)
+                    {
+                        token.IsUsed = true;
+                        token.IsRevoked = true;
+                        _dbContext.RefreshTokens.Update(token);
+                        await _dbContext.SaveChangesAsync(cancellationToken);
+                    }
+                }
+
+                // If you have Cookie/Session authentication
+                // (e.g. when using SignInManager)
+                await _signInManager.SignOutAsync();
+                return new GeneralResult(true, messages.MsgLogoutSuccessful, null,  ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Logout for userId={UserId}", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" logout"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ChangePasswordAsync(ChangePasswordDto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserAsync(cancellationToken, null, null, dto.UserId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("ChangePassword : User not found or deleted or inactive. ID={UserId}", dto.UserId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                if (dto.NewPassword != dto.ConfirmPassword)
+                {
+                    _logger.LogWarning("ChangePassword: Passwords do not match for user {UserId}", dto.UserId);
+                    return new GeneralResult(false, messages.MsgPasswordNotMatch, null, ErrorType.BadRequest);
+                }
+
+                var result = await _userManager.ChangePasswordAsync(user.Data, dto.CurrentPassword, dto.NewPassword);
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        _logger.LogError("ChangePassword: {Code} - {Description}", error.Code, error.Description);
+                    }
+
+                    return new GeneralResult(false, messages.MsgPasswordChangeFailed, null, ErrorType.BadRequest);
+                }
+
+                _logger.LogInformation("ChangePassword: Password changed successfully for user {UserId}", dto.UserId);
+                return new GeneralResult(true, messages.MsgPasswordChanged, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while changing password for user {UserId}", dto.UserId);
+                return new GeneralResult(false, messages.MsgPasswordChangeFailed, null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ForgotPasswordAsync(ForgotPasswordDto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // 1: Find the user by email
+                var user = await userService.FindUserAsync(cancellationToken, null, dto.PhoneNumber, null, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("ForgotPassword : User not found or deleted or inactive. PhoneNumber={PhoneNumber}", dto.PhoneNumber);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                // 2: Check if the user is confirmed
+                if (!user.Data.PhoneNumberConfirmed)
+                {
+                    _logger.LogWarning("ForgotPassword: Phone number {PhoneNumber} is not confirmed", dto.PhoneNumber);
+                    return new GeneralResult(false, messages.MsgPhoneNotConfirmed, null, ErrorType.BadRequest); // temp
+
+                    // TODO: send confirmation sms
+
+                    //var confirmResult = await _emailConfirmation.SendEmailConfirmation(user.Data);
+                    //_logger.LogInformation("ForgotPassword: Email sent to user with Email {Email}", dto.Email);
+                    //if (confirmResult.IsSuccess == false)
+                    //{
+                    //    return new GeneralResult(false, confirmResult.Message ?? messages.MsgEmailConfirmationFailed, confirmResult.Data, ErrorType.InternalServerError);
+                    //}
+
+                    //return new GeneralResult(true, confirmResult.Message ?? messages.MsgEmailConfirmationSent, confirmResult.Data, ErrorType.BadRequest);
+                }
+                else
+                {
+                    // 3: Generate a password reset token
+                    var resetResult = await _emailConfirmation.SendEmailPasswordReset(user.Data);
+                    _logger.LogInformation("ForgotPassword: Email sent to user with PhoneNumber {PhoneNumber}", dto.PhoneNumber);
+                    if (resetResult.IsSuccess == false)
+                    {
+                        return new GeneralResult(false, resetResult.Message ?? messages.MsgPasswordResetTokenGenerationFailed, resetResult.Data, ErrorType.InternalServerError);
+                    }
+
+                    return new GeneralResult(true, messages.MsgForgotPasswordEmailSent, null, ErrorType.Success);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while sending forgot password email for user with Email {Email}", dto.PhoneNumber);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" forgot password"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserAsync(cancellationToken, null, dto.PhoneNumber, null, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("ResetPassword : User not found or deleted or inactive. ID={UserId}", dto.PhoneNumber);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                var result = await _userManager.ResetPasswordAsync(user.Data, dto.Token, dto.NewPassword);
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        _logger.LogError("ResetPassword: Error for user {UserId} - {Code}: {Description}", user.Data.Id, error.Code, error.Description);
+                    }
+
+                    return new GeneralResult(false, messages.MsgPasswordResetFailed, null, ErrorType.BadRequest);
+                }
+
+                _logger.LogInformation("ResetPassword: Password reset successful for user {UserId}", user.Data.Id);
+                return new GeneralResult(true, messages.MsgPasswordResetSuccessful, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ResetPassword: Exception occurred while resetting password for user with phone {PhoneNumber}", dto.PhoneNumber);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" reset password"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> EnableTwoFactorAuthAsync(Enable2FADto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserAsync(cancellationToken, null, null, dto.UserId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("EnableTwoFactorAuthAsync: User not found or deleted or inactive. ID={UserId}", dto.UserId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                // Verify the token from authenticator app
+                if (dto.AppVerificationCode is null)
+                {
+                    _logger.LogWarning("EnableTwoFactorAuthAsync: App verification code is missing.");
+                    return new GeneralResult(false, messages.MsgAppVerificationCodeMissing, null, ErrorType.BadRequest);
+                }
+
+                // Verify the token from authenticator app.
+                var isTokenValid = await VerifyTwoFactorCodeAsync(user.Data, dto.AppVerificationCode);
+                if (isTokenValid.IsSuccess == false)
+                {
+                    return new GeneralResult(false, messages.MsgInvalid2FAToken, null, ErrorType.BadRequest);
+                }
+
+                var result = await _userManager.SetTwoFactorEnabledAsync(user.Data, true);
+                return result.Succeeded
+                    ? new GeneralResult(true, messages.MsgTwoFAEnabled, null, ErrorType.Success)
+                    : new GeneralResult(false, messages.MsgTwoFAEnableFailed, null, ErrorType.BadRequest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while enabling 2FA for user {UserId}", dto.UserId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" enable two factor auth"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> DisableTwoFactorAuthAsync(string userId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("DisableTwoFactorAuthAsync: User not found or deleted or inactive. ID={UserId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                var result = await _userManager.SetTwoFactorEnabledAsync(user.Data, false);
+                return result.Succeeded
+                    ? new GeneralResult(true, messages.MsgTwoFADisabled, null, ErrorType.Success)
+                    : new GeneralResult(false, messages.MsgTwoFADisableFailed, null, ErrorType.InternalServerError);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DisableTwoFactorAuthAsync - Exception occurred while disabling 2FA for user {UserId}", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" disable 2FA"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> GetTwoFactorSetupAsync(string userId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null || user.IsDeleted || !user.IsActive)
+                {
+                    _logger.LogWarning("GetTwoFactorSetup: User {UserId} not found", userId);
+                    return new GeneralResult(false, messages.MsgUserNotFound, null, ErrorType.NotFound);
+                }
+
+                // Get or generate authenticator key
+                var key = await _userManager.GetAuthenticatorKeyAsync(user);
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    await _userManager.ResetAuthenticatorKeyAsync(user);
+                    key = await _userManager.GetAuthenticatorKeyAsync(user);
+                }
+
+                // Build QR Code URI
+                var appName = "Lumora";
+                var label = $"{appName}:{user.Email}";
+                var issuer = appName;
+
+                var qrCodeUri = $"otpauth://totp/{Uri.EscapeDataString(label)}?secret={key}&issuer={Uri.EscapeDataString(issuer)}&digits=6";
+
+                _logger.LogInformation("2FA setup info generated for user {UserId}", userId);
+                return new GeneralResult(true, messages.MsgTwoFASetupInfoGenerated, new { SharedSecretKey = key, QrCodeUri = qrCodeUri }, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating 2FA setup for user {UserId}", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" generating 2FA setup"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    _logger.LogWarning("Refresh token is required.");
+                    return new GeneralResult(false, messages.MsgRefreshTokenRequired, null, ErrorType.BadRequest);
+                }
+
+                var hashedToken = _tokenService.HashRefreshToken(refreshToken);
+                var token = await _dbContext.RefreshTokens
+                    .Include(rt => rt.User)
+                    .FirstOrDefaultAsync(rt =>
+                        rt.TokenHash == hashedToken && !rt.IsUsed && !rt.IsRevoked && rt.Expiration > DateTimeOffset.UtcNow, cancellationToken);
+
+                if (token == null)
+                {
+                    _logger.LogWarning($"RefreshTokenAsync -  Refresh token : {token} is invalid or expired.");
+                    return new GeneralResult(false, messages.MsgInvalidOrExpiredRefreshToken, null, ErrorType.BadRequest);
+                }
+
+                if (token.User == null || token.User.IsDeleted || !token.User.IsActive)
+                {
+                    _logger.LogWarning($"RefreshTokenAsync -  User : {token.User} is invalid or inactive.");
+                    return new GeneralResult(false, messages.MsgUserInvalidOrInactive, null, ErrorType.BadRequest);
+                }
+
+                // Mark old token as used
+                token.IsUsed = true;
+                token.IsRevoked = true;
+
+                // Issue new token
+                var tokenResult = await IssueTokensAsync(token.User);
+                if (tokenResult.IsSuccess == false) return tokenResult;
+
+                await _dbContext.SaveChangesAsync();
+
+                _logger.LogInformation("RefreshTokenAsync - Refresh token succeeded for user {UserId}.", token.User.Id);
+                return new GeneralResult(true, messages.MsgTokenRefreshed, tokenResult.Data, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RefreshTokenAsync - Error during refresh token process.");
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" refresh token"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ConfirmEmailAsync(string userId, string confirmationToken, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(confirmationToken))
+                {
+                    return new GeneralResult(false, messages.MsgUserIdAndConfirmationTokenRequired, null, ErrorType.BadRequest);
+                }
+
+                var user = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("CompleteProfileAsync: User not found or deleted or inactive. userId={userId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                if (user.Data.EmailConfirmed)
+                {
+                    _logger.LogWarning("ResendConfirmationEmailAsync: Email is already confirmed. ID={UserId}", user.Data.Id);
+                    return new GeneralResult(true, messages.MsgEmailAlreadyConfirmed, null, ErrorType.BadRequest);
+                }
+
+                var result = await _userManager.ConfirmEmailAsync(user.Data, confirmationToken);
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("Email confirmed for user {UserId}.", user.Data.Id);
+                    return new GeneralResult(true, messages.MsgEmailConfirmed, null, ErrorType.Success);
+                }
+
+                _logger.LogWarning($"Failed to confirm email for user {userId}, errors: {string.Join(",", result.Errors.Select(e => e.Description))}.", user.Data.Id);
+                return new GeneralResult(false, messages.MsgEmailConfirmationFailed, null, ErrorType.BadRequest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error confirming email for user {UserId}.", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" confirming email"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ConfirmPhoneAsync(string userId, string verificationCode, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(verificationCode))
+                {
+                    _logger.LogWarning("UserId and verification code are required.");
+                    return new GeneralResult(false, messages.MsgUserIdAndVerificationCodeRequired, null, ErrorType.BadRequest);
+                }
+
+                var user = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("CompleteProfileAsync: User not found or deleted or inactive. ID={UserId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                // Verify verification code from authenticator app.
+                var isValid = await _userManager.VerifyChangePhoneNumberTokenAsync(user.Data, verificationCode, user.Data.PhoneNumber!);
+                if (!isValid)
+                {
+                    _logger.LogWarning("Invalid phone confirmation code for user {UserId}.", userId);
+                    return new GeneralResult(false, messages.MsgInvalidOrExpiredCode, null, ErrorType.BadRequest);
+                }
+
+                user.Data.PhoneNumberConfirmed = true;
+                var result = await _userManager.UpdateAsync(user.Data);
+                if (result.Succeeded == false)
+                {
+                    _logger.LogWarning($"Failed to confirm phone number for user ID:{userId}." + $" Errors: {result.Errors}.");
+                    return new GeneralResult(false, messages.MsgPhoneNumberConfirmationFailed, null, ErrorType.BadRequest);
+                }
+
+                _logger.LogInformation("Phone number confirmed for user {UserId}.", userId);
+                return new GeneralResult(true, messages.MsgPhoneNumberConfirmed, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error confirming phone number for user {UserId}.", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage(" confirming phone number."), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ResendConfirmationEmailAsync(string email, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    _logger.LogWarning("ResendConfirmationEmailAsync: Email is required.");
+                    return new GeneralResult(false, messages.MsgEmailRequired, null, ErrorType.BadRequest);
+                }
+
+                var user = await userService.FindUserAsync(cancellationToken, email, null, null, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("CompleteProfileAsync: User not found or deleted or inactive. email={email}", email);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                if (user.Data.EmailConfirmed)
+                {
+                    _logger.LogWarning("ResendConfirmationEmailAsync: Email is already confirmed. ID={UserId}", user.Data.Id);
+                    return new GeneralResult(true, messages.MsgEmailAlreadyConfirmed, null, ErrorType.BadRequest);
+                }
+
+                var result = await _emailConfirmation.SendEmailConfirmation(user.Data);
+                if (result.IsSuccess == false)
+                {
+                    _logger.LogWarning("ResendConfirmationEmailAsync: Failed to send confirmation email to {Email}.", email);
+                    return new GeneralResult(false, result.Message ?? messages.MsgEmailConfirmationFailed, result.Data, ErrorType.InternalServerError);
+                }
+
+                _logger.LogInformation("ResendConfirmationEmailAsync: Confirmation email sent to {Email}.", email);
+                return new GeneralResult(true, messages.MsgEmailConfirmationSent, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resending confirmation email to {Email}", email);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage("resending confirmation email"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ResendConfirmationSmsAsync(string phoneNumber, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(phoneNumber))
+                {
+                    _logger.LogWarning("ResendConfirmationSmsAsync: Phone number is required.");
+                    return new GeneralResult(false, messages.MsgPhoneNumberRequired, null, ErrorType.BadRequest);
+                }
+
+                var user = await userService.FindUserWithoutPhoneNumberConfirmedAsync(cancellationToken, null, phoneNumber);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("CompleteProfileAsync: User not found or deleted or inactive. phoneNumber={phoneNumber}", phoneNumber);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                if (user.Data.PhoneNumberConfirmed)
+                {
+                    _logger.LogWarning("ResendConfirmationSmsAsync: Phone number is already confirmed. phoneNumber={phoneNumber}", phoneNumber);
+                    return new GeneralResult(true, messages.MsgPhoneAlreadyConfirmed, null, ErrorType.BadRequest);
+                }
+
+                // TODO: Send SMS confirmation
+
+                return new GeneralResult(true, messages.MsgPhoneConfirmationSent, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resending SMS confirmation to {PhoneNumber}", phoneNumber);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage("resending SMS confirmation"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> DeactivateUserAsync(string userId, CancellationToken cancellationToken, string? reason = null)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    _logger.LogWarning("ActivateUserAsync: User ID is required.");
+                    return new GeneralResult(false, messages.MsgIdInvalid, null, ErrorType.BadRequest);
+                }
+
+                var user = await userService.GetUserByIdWithoutActiveValidation(userId);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("DeactivateUserAsync: User not found. ID={UserId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, ErrorType.NotFound);
+                }
+
+                if (!user.Data.IsActive)
+                {
+                    _logger.LogInformation("DeactivateUserAsync: User already inactive. ID={UserId}", userId);
+                    return new GeneralResult(true, messages.MsgAccountAlreadyDeactivated, null, ErrorType.BadRequest);
+                }
+
+                user.Data.IsActive = false;
+                user.Data.DeActiveReason = reason;
+                user.Data.UpdatedAt = DateTimeOffset.UtcNow;    
+                await _userManager.UpdateAsync(user.Data);
+
+                // TODO: Send deactivation email with reason.
+                await _signInManager.SignOutAsync();
+                _logger.LogInformation("DeactivateUserAsync: User deactivated. ID={UserId}", userId);
+                return new GeneralResult(true, messages.MsgAccountDeactivated, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deactivating user {UserId}.", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage("deactivate account."), ex.Message);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ActivateUserAsync(string userId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    _logger.LogWarning("ActivateUserAsync: User ID is required.");
+                    return new GeneralResult(false, messages.MsgIdInvalid, null, ErrorType.BadRequest);
+                }
+
+                var user = await userService.GetUserByIdWithoutActiveValidation(userId);
+                if(user.Data == null)
+                {
+                    _logger.LogWarning("ActivateUserAsync: User not found. ID={UserId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, ErrorType.NotFound);
+                }
+
+                if (user.Data.IsActive)
+                {
+                    _logger.LogWarning("ActivateUserAsync: User already active. ID={UserId}", userId);
+                    return new GeneralResult(true, messages.MsgAccountAlreadyActivated, null, ErrorType.BadRequest);
+                }
+
+                user.Data.IsActive = true;
+                user.Data.UpdatedAt = DateTimeOffset.UtcNow;
+                var result = await _userManager.UpdateAsync(user.Data);
+
+                if(result.Succeeded == false)
+                {
+                    _logger.LogWarning("ActivateUserAsync: Failed to activate user. ID={UserId}", userId);
+                    return new GeneralResult(false, messages.MsgAccountActivationFailed, null, ErrorType.BadRequest);
+                }
+
+                _logger.LogInformation("User {UserId} activated successfully.", userId);
+                // TODO: Send activation email
+
+                return new GeneralResult(true, messages.MsgAccountActivated, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error activating user {UserId}.", userId);
+                return new GeneralResult(
+                    false, messages.GetUnexpectedErrorMessage(" activating your account. please try again or contact support."), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> ChangePhoneNumberAsync(string userId, string newPhoneNumber, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    _logger.LogWarning("ChangePhoneNumberAsync: User ID is required.");
+                    return new GeneralResult(false, messages.MsgIdInvalid, null, ErrorType.BadRequest);
+                }
+
+                if(string.IsNullOrWhiteSpace(newPhoneNumber))
+                {
+                    _logger.LogWarning("ChangePhoneNumberAsync: New phone number is required.");
+                    return new GeneralResult(false, messages.MsgPhoneNumberRequired, null, ErrorType.BadRequest);
+                }
+
+                var user = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("CompleteProfileAsync: User not found or deleted or inactive. ID={UserId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                // check if the new phone number is the same as the old one.
+                if (user.Data.PhoneNumber == newPhoneNumber)
+                {
+                    _logger.LogWarning("ChangePhoneNumberAsync: New phone number is the same as the old one. ID={UserId}", userId);
+                    return new GeneralResult(false, messages.MsgPhoneNumberSame, null, ErrorType.BadRequest);
+                }
+
+                // check if the new phone number already exists
+                var phoneExists = await _userManager.Users.AnyAsync(u =>
+                    u.PhoneNumber == newPhoneNumber && u.Id != userId && !u.IsDeleted, cancellationToken);
+
+                if (phoneExists)
+                {
+                    _logger.LogWarning("ChangePhoneNumberAsync: New phone number already exists. ID={UserId}", userId);
+                    return new GeneralResult(false, messages.MsgPhoneNumberNotAvilable, null, ErrorType.BadRequest);
+                }
+
+                user.Data.PhoneNumber = newPhoneNumber;
+                user.Data.PhoneNumberConfirmed = true; // TODO: verify the new phone number
+                user.Data.UpdatedAt = DateTimeOffset.UtcNow;
+                await _userManager.UpdateAsync(user.Data);
+
+                // send the confirmation code to the new phone number
+                // var code = await _userManager.GenerateChangePhoneNumberTokenAsync(user, newPhoneNumber);
+                // TODO: send the confirmation code to the new phone number
+
+                _logger.LogInformation("ChangePhoneNumberAsync: Phone number changed successfully for user {UserId}", userId);
+                return new GeneralResult(true, messages.MsgPhoneNumberChanged, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing phone number for user {UserId}", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage("change phone number."), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> CompleteProfileAsync(string userId, CompleteUserDataDto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (user.Data == null)
+                {
+                    _logger.LogWarning("CompleteProfileAsync: User not found or deleted or inactive. ID={UserId}", userId);
+                    return new GeneralResult(false, user.Message ?? messages.MsgUserNotFound, null, user.ErrorType);
+                }
+
+                if (dto.DateOfBirth.HasValue)
+                    user.Data.DateOfBirth = dto.DateOfBirth;
+
+                if (!string.IsNullOrWhiteSpace(dto.AboutMe))
+                    user.Data.AboutMe = dto.AboutMe;
+
+                if (!string.IsNullOrWhiteSpace(dto.Avatar))
+                    user.Data.Avatar = dto.Avatar;
+
+                user.Data.UpdatedAt = DateTimeOffset.UtcNow;
+
+                var updateResult = await _userManager.UpdateAsync(user.Data);
+                if (!updateResult.Succeeded)
+                {
+                    foreach (var error in updateResult.Errors)
+                    {
+                        _logger.LogError("CompleteUser: Error {Code} - {Description}", error.Code, error.Description);
+                    }
+
+                    return new GeneralResult(false, messages.MsgUserProfileFailed, null, ErrorType.BadRequest);
+                }
+
+                _logger.LogInformation("CompleteUser: User {UserId} completed their profile successfully.", userId);
+                return new GeneralResult(true, messages.MsgUserProfileCompleted, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while completing user profile for {UserId}", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage("complete profile"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult> UpdateProfileAsync(string userId, UserUpdateDto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var existingEntity = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (existingEntity.Data == null)
+                {
+                    _logger.LogWarning("UpdateProfileAsync: User not found or deleted or inactive. ID={UserId}", userId);
+                    return new GeneralResult(false, existingEntity.Message ?? messages.MsgUserNotFound, null, existingEntity.ErrorType);
+                }
+
+                var user = existingEntity.Data;
+
+                if (!string.IsNullOrWhiteSpace(dto.FullName))
+                    user.FullName = dto.FullName;
+
+                if (!string.IsNullOrWhiteSpace(dto.City))
+                    user.City = dto.City;
+
+                if (!string.IsNullOrWhiteSpace(dto.Sex))
+                    user.Sex = dto.Sex;
+
+                if (!string.IsNullOrWhiteSpace(dto.AboutMe))
+                    user.AboutMe = dto.AboutMe;
+
+                if (dto.DateOfBirth.HasValue)
+                    user.DateOfBirth = dto.DateOfBirth.Value.ToUniversalTime();
+
+                if (!string.IsNullOrWhiteSpace(dto.Avatar))
+                    user.Avatar = dto.Avatar;
+
+                user.UpdatedAt = DateTimeOffset.UtcNow;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        _logger.LogError("UpdateUser: Error {Code} - {Description}", error.Code, error.Description);
+                    }
+
+                    return new GeneralResult(false, messages.MsgUserProfileUpdateFailed, null, ErrorType.BadRequest);
+                }
+
+                _logger.LogInformation("User {UserId} updated successfully.", userId);
+                return new GeneralResult(true, messages.MsgUserProfileUpdated, null, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user {UserId}.", userId);
+                return new GeneralResult(false, messages.GetUnexpectedErrorMessage("update profile"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<GeneralResult<UserProfileDto>> GetProfileAsync(string userId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var existingEntity = await userService.FindUserAsync(cancellationToken, null, null, userId, true);
+                if (existingEntity.Data == null)
+                {
+                    _logger.LogWarning("GetProfileAsync: User not found or deleted or inactive. ID={UserId}", userId);
+                    return new GeneralResult<UserProfileDto>(false, existingEntity.Message ?? messages.MsgUserNotFound, null, existingEntity.ErrorType);
+                }
+
+                var dto = MapToUserProfileDto(existingEntity.Data);
+
+                return new GeneralResult<UserProfileDto>(true, messages.MsgUserProfileRetrieved, dto, ErrorType.Success);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user {UserId}.", userId);
+                return new GeneralResult<UserProfileDto>(false, messages.GetUnexpectedErrorMessage("get profile"), null, ErrorType.InternalServerError);
+            }
+        }
+
+        #region Private methods
+
+        /// <summary>
+        /// Verifies the 2FA code.
+        /// </summary>
+        private async Task<GeneralResult> VerifyTwoFactorCodeAsync(User user, string twoFactorCode)
+        {
+            if (user == null)
+            {
+                return new GeneralResult(false, "User not provided for 2FA verification.");
+            }
+
+            if (twoFactorCode is null)
+            {
+                return new GeneralResult(false, "2FA code is missing.", null);
+            }
+
+            var isValid = await _userManager.VerifyTwoFactorTokenAsync(
+                user,
+                TokenOptions.DefaultAuthenticatorProvider,
+                twoFactorCode.Trim());
+
+            return isValid
+                ? new GeneralResult(true, "2FA code is valid.")
+                : new GeneralResult(false, "Invalid 2FA code.", null);
+        }
+
+        /// <summary>
+        /// Issues tokens for the user.
+        /// </summary>
+        private async Task<GeneralResult> IssueTokensAsync(User user)
+        {
+            try
+            {
+                var now = DateTimeOffset.UtcNow;
+                var tokenData = await _tokenService.GenerateTokenWithRefreshTokenAsync(user);
+                if (string.IsNullOrWhiteSpace(tokenData?.AccessToken) || string.IsNullOrWhiteSpace(tokenData.RefreshToken))
+                {
+                    _logger.LogError("Token generation failed for user {UserId}", user.Id);
+                    return new GeneralResult(false, "Failed to generate token.");
+                }
+
+                var hashedRefresh = _tokenService.HashRefreshToken(tokenData.RefreshToken);
+
+                _dbContext.RefreshTokens.Add(new RefreshToken
+                {
+                    UserId = user.Id,
+                    TokenHash = hashedRefresh,
+                    Expiration = now.AddDays(_jwtConfig.Value.RefreshTokenExpirationDays),
+                    CreatedAt = now
+                });
+
+                await _dbContext.SaveChangesAsync();
+
+                // fetch user permissions and roles
+                var roleNames = await _userManager.GetRolesAsync(user);
+                var userRoles = new List<UserRoleDto>();
+
+                foreach (var roleName in roleNames)
+                {
+                    var permissionResult = await _permissionService.GetPermissionsForRoleAsync(roleName);
+                    var rolePermissions = permissionResult.Data ?? new List<string>();
+
+                    userRoles.Add(new UserRoleDto
+                    {
+                        Name = roleName,
+                        Permissions = rolePermissions
+                            .Select(p => new UserPermissionsDto { PermissionName = p })
+                            .ToList()
+                    });
+                }
+
+                var result = new TokenDto
+                {
+                    AccessToken = tokenData.AccessToken,
+                    RefreshToken = tokenData.RefreshToken,
+                    AccessTokenExpiration = tokenData.AccessTokenExpiration,
+                    TokenType = "Bearer",
+                    UserId = user.Id,
+                    Email = user.Email,
+                    Roles = userRoles
+                };
+
+                return new GeneralResult(true, "Token generated successfully.", result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while issuing token for user {UserId}", user.Id);
+                return new GeneralResult(false, "An error occurred while generating token.", ex.Message);
+            }
+        }
+        #endregion
+
+        #region profile map
+
+        private UserProfileDto MapToUserProfileDto(User user)
+        {
+            var dto = new UserProfileDto
+            {
+                Id = user.Id,
+                FullName = user.FullName ?? string.Empty,
+                PhoneNumber = user.PhoneNumber ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                City = user.City ?? string.Empty,
+                Sex = user.Sex ?? string.Empty,
+                DateOfBirth = user.DateOfBirth ?? DateTimeOffset.MinValue,
+                AboutMe = user.AboutMe ?? string.Empty,
+                Avatar = user.Avatar ?? string.Empty,
+                IsActive = user.IsActive,
+
+                ProgramEnrollmentList = MapEnrollments(user.ProgramEnrollments),
+                ProgramProgressList = MapProgramProgress(user.StudentProgresses),
+                LiveCoursesProgressList = MapLiveProgress(user.StudentProgresses),
+                JobApplicationList = MapJobApplications(user.JobApplications),
+                PaymentList = MapPayments(user.Payments),
+                CertificateList = MapCertificates(user.ProgramEnrollments)
+            };
+            return dto;
+        }
+
+        private List<UserProgramEnrollmentDto> MapEnrollments(ICollection<ProgramEnrollment>? enrollments)
+        {
+            if (enrollments == null || !enrollments.Any())
+                return new List<UserProgramEnrollmentDto>();
+
+            return enrollments
+                .Where(e => e.TrainingProgram != null)
+                .Select(e => new UserProgramEnrollmentDto
+                {
+                    ProgramId = e.ProgramId,
+                    ProgramTitle = e.TrainingProgram.Name ?? string.Empty,
+                    EnrolledAt = e.EnrolledAt,
+                    EnrollmentStatus = e.EnrollmentStatus.ToString(),
+                    HasCertificate = e.Certificate != null
+                })
+                .ToList();
+        }
+
+        private List<ProgramWithCoursesProgressDto> MapProgramProgress(ICollection<TraineeProgress>? progresses)
+        {
+            if (progresses == null || !progresses.Any())
+                return new List<ProgramWithCoursesProgressDto>();
+
+            var result = new List<ProgramWithCoursesProgressDto>();
+
+            // program groups
+            var programGroups = progresses
+                .Where(p => p.ProgramId != null && p.Level == ProgressLevel.Program)
+                .GroupBy(p => p.ProgramId);
+
+            foreach (var g in programGroups)
+            {
+                var programId = g.Key;
+                var program = g.First().Program!;
+
+                // course progress
+                var courseProgresses = progresses
+                    .Where(p => p.ProgramId == programId && p.Level == ProgressLevel.Course && p.CourseId != null)
+                    .ToList();
+
+                var courseDtos = courseProgresses.Select(c =>
+                {
+                    var courseEntity = _dbContext.Set<ProgramCourse>()
+                        .AsNoTracking()
+                        .FirstOrDefault(cr => cr.Id == c.CourseId);
+
+                    var title = courseEntity?.Name ?? messages.MsgCourseTitleUnavailable;
+
+                    return new ProgramCourseProgressDto
+                    {
+                        CourseId = c.CourseId!.Value,
+                        CouresTitle = title,
+                        CourseType = c.CourseType ?? CourseType.Program,
+                        CompletionPercentage = c.CompletionPercentage,
+                        IsCompleted = c.IsCompleted,
+                        TimeSpent = c.TotalTimeSpent
+                    };
+                }).ToList();
+
+                var totalPercentage = courseDtos.Any()
+                    ? courseDtos.Average(x => x.CompletionPercentage)
+                    : g.Average(x => x.CompletionPercentage);
+
+                var isProgramCompleted = g.All(x => x.IsCompleted);
+
+                var totalTimeSpent = courseDtos
+                    .Aggregate(TimeSpan.Zero, (acc, x) => acc.Add(x.TimeSpent));
+
+                result.Add(new ProgramWithCoursesProgressDto
+                {
+                    ProgramId = programId ?? 0,
+                    ProgramTitle = program.Name,
+                    ProgramCompletionPercentage = Math.Round(totalPercentage, 2),
+                    ProgramIsCompleted = isProgramCompleted,
+                    TotalTimeSpent = totalTimeSpent,
+                    Courses = courseDtos
+                });
+            }
+
+            return result;
+        }
+
+        private List<RegisteredLiveCoursesDto> MapLiveCourses(string userId)
+        {
+            var courses = _dbContext.Set<UserLiveCourse>()
+                .AsNoTracking().Where(c => c.UserId == userId && !c.IsDeleted).ToList();
+
+            List<RegisteredLiveCoursesDto> result = new List<RegisteredLiveCoursesDto>();
+            foreach (var course in courses)
+            {
+
+            }
+        }
+
+        private List<UserJobApplicationDto> MapJobApplications(ICollection<JobApplication>? applications)
+        {
+            if (applications == null || !applications.Any())
+                return new List<UserJobApplicationDto>();
+
+            return applications
+                .Where(a => a.Job != null)
+                .Select(a => new UserJobApplicationDto
+                {
+                    JobId = a.JobId,
+                    JobTitle = a.Job.Title,
+                    Description = a.Job.Description,
+                    Employer = a.Job.Employer,
+                    Location = a.Job.Location,
+                    JobType = a.Job.JobType,
+                    WorkplaceCategory = a.Job.WorkplaceCategory,
+                    Salary = a.Job.Salary,
+                    PostedAt = a.Job.PostedAt,
+
+                    ApplicationStatus = a.Status,
+                    AppliedAt = a.AppliedAt,
+
+                    ResumeUrl = a.ResumeUrl,
+                    CoverLetter = a.CoverLetter
+                })
+                .ToList();
+        }
+
+        private List<UserPaymentDto> MapPayments(ICollection<Payment>? payments)
+        {
+            if (payments == null || !payments.Any())
+                return new List<UserPaymentDto>();
+
+            return payments.Select(p => new UserPaymentDto
+            {
+                PaymentId = p.Id,
+                Amount = p.Amount,
+                Currency = p.Currency,
+                Status = p.Status,
+                PaymentPurpose = p.PaymentPurpose,
+                PaymentGateway = p.PaymentGateway,
+                GatewayReferenceId = p.GatewayReferenceId,
+                PaidAt = p.PaidAt,
+                Metadata = p.Metadata,
+
+                Items = p.Items.Select(i => new UserPaymentItemDto
+                {
+                    ItemType = i.ItemType,
+                    ItemId = i.ItemId,
+                    Amount = i.Amount
+                }).ToList()
+            }).ToList();
+        }
+
+        private List<UserCertificateDto> MapCertificates(ICollection<ProgramEnrollment>? enrollments)
+        {
+            if (enrollments == null || !enrollments.Any())
+                return new List<UserCertificateDto>();
+
+            return enrollments
+                .Where(e => e.Certificate != null && e.TrainingProgram != null)
+                .Select(e =>
+                {
+                    var cert = e.Certificate!;
+                    return new UserCertificateDto
+                    {
+                        CertificateId = cert.CertificateId,
+                        ProgramId = e.ProgramId,
+                        ProgramTitle = e.TrainingProgram.Name ?? string.Empty,
+
+                        IssuedAt = cert.IssuedAt,
+                        VerifiedAt = cert.VerifiedAt,
+                        ExpirationDate = cert.ExpirationDate,
+
+                        DeliveryMethod = cert.DeliveryMethod,
+                        ShippingStatus = cert.ShippingStatus,
+                        ShippingAddress = cert.ShippingAddress,
+
+                        Status = cert.Status,
+                        IssuedBy = cert.IssuedBy,
+                        VerificationCode = cert.VerificationCode,
+                        Notes = cert.Notes
+                    };
+                })
+                .ToList();
+        }
+        #endregion
+    }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:19248",
+      "sslPort": 44328
+    }
+  },
+  "profiles": {
+    "https": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://0.0.0.0:45437",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "JWT__SECRET": "ea554be0f38ec1c36d220ba9e7321e997bc887ca1aea63b5decd99818e56baa2b110c08677574baef18f2cf5b35ea846e2671ea6f2efa90eba5dadc7d502f00dfe4ae41227a5d79c656eda68efabb90424c1501c58d4dbca7b8d246f9c84fee0c4ed9b8cfc336d8da6b40740d8bd3bdc3c2183a5f5ac48f619970dd79b755910",
+        "JWT__ISSUER": "issuer",
+        "JWT__AUDIENCE": "audience"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

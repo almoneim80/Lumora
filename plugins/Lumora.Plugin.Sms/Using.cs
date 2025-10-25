@@ -1,0 +1,37 @@
+﻿global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+
+global using Lumora.Plugin.Sms.Configuration;
+global using Lumora.Plugin.Sms.Exceptions;
+global using Lumora.Plugin.Sms.Interfaces;
+global using Lumora.Plugin.Sms.DTOs;
+global using Lumora.Plugin.Sms.Tasks;
+global using Lumora.Plugin.Sms.Services;
+
+global using Lumora.Data;
+global using Lumora.Tasks;
+global using Lumora.Services;
+global using Lumora.Configuration;
+global using Lumora.Exceptions;
+global using Lumora.Interfaces;
+global using Lumora.Entities;
+global using Lumora.Enums;
+global using Lumora.DTOs;
+global using Serilog;
+global using Lumora.Helpers;
+global using Twilio;
+global using Twilio.Exceptions;
+global using Twilio.Rest.Api.V2010.Account;
+global using Twilio.Types;
+global using PhoneNumbers;
+global using Microsoft.Extensions.Logging;
+global using Lumora.DTOs.Base;
+global using System.ComponentModel.DataAnnotations;
+global using Lumora.Entities.Tables;
+global using Lumora.Interfaces.Customer;
+global using ErrorType = Lumora.Enums.ErrorType;

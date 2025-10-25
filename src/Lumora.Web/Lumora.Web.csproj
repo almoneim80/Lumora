@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<SLumorapressTfmSLumoraportBuildWarnings>true</SLumorapressTfmSLumoraportBuildWarnings>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Lumora.Web.xml</DocumentationFile>
+		<RunWithWarnings>true</RunWithWarnings>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="bin\Debug\net8.0\Lumora.Web.xml" />
+	</ItemGroup>
+
+	<!--<ItemGroup>
+	  <None Remove="bin\Debug\net8.0\Lumora.Web.xml" />
+	</ItemGroup>-->
+
+	<ItemGroup>
+		<None Include="bin\$(Configuration)\$(TargetFramework)\Lumora.Web.xml" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\plugins\Lumora.Plugin.Sms\Lumora.Plugin.Sms.csproj" />
+		<ProjectReference Include="..\Lumora.Core\Lumora.Core.csproj" />
+	</ItemGroup>
+
+	<!-- EF Migrations Suport -->
+	<ItemGroup Label="FilesToCopy">
+		<Content Include="Lumora.targets" PackagePath="Lumora.targets" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\free_domains.txt" />
+		<EmbeddedResource Include="Resources\disposable_domains.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.12">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+		<PackageReference Include="System.Threading.Channels" Version="9.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Update="SonarAnalyzer.CSharp" Version="10.6.0.109712">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Lumora.Core\Lumora.Core.csproj" />
+	</ItemGroup>
+</Project>
