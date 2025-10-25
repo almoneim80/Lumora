@@ -29,174 +29,79 @@ Clear and organized folder structure.
 
 ### Folder Structure
 Lumora/
-├── plugins/
-│   └── Lumora.Plugin.Sms/
-│       ├── Dependencies/
-│       ├── Configuration/
-│       ├── Controllers/
-│       ├── DTOs/
-│       ├── Exceptions/
-│       ├── Interfaces/
-│       ├── Services/
-│       ├── Tasks/
-│       ├── pluginsettings.json
-│       ├── SmsPlugin.cs
-│       ├── stylecop.json
-│       └── Using.cs
-├── Lumora.Core/
-│   ├── Configuration/
-│   │   ├── MappingProfiles/
-│   ├── Data/
-│   │   ├── DbSets/
-│   ├── DataAnnotations/
-│   ├── DTOs/
-│   │   ├── AffiliateMarketing/
-│   │   ├── Authentication/
-│   │   ├── Authorization/
-│   │   ├── Base/
-│   │   ├── Club/
-│   │   ├── Email/
-│   │   ├── Job/
-│   │   ├── LiveCourse/
-│   │   ├── MediaDtos/
-│   │   ├── Payment/
-│   │   ├── Podcast/
-│   │   ├── Programs/
-│   │   ├── StaticContent/
-│   │   ├── Test/
-│   │   ├── Token/
-│   ├── Elastic/
-│   │   ├── Migrations/
-│   ├── Entities/
-│   │   └── Tables/
-│   ├── Enums/
-│   ├── Exceptions/
-│   ├── Extensions/
-│   ├── Formatters/
-│   │   └── Csv/
-│   ├── Geography/
-│   ├── Helpers/
-│   │   ├── Customer/
-│   ├── Identity/
-│   ├── Infrastructure/
-│   │   ├── PermissionInfra/
-│   │   ├── StaticContentInfra/
-│   ├── Interfaces/
-│   │   ├── AffiliateMarketingIntf/
-│   │   ├── AuthenticationIntf/
-│   │   ├── AuthorizationIntf/
-│   │   ├── ClubIntf/
-│   │   ├── EmailIntf/
-│   │   ├── JobIntf/
-│   │   ├── LiveCourseIntf/
-│   │   ├── PaymentIntf/
-│   │   ├── PodcastEpisodeIntf/
-│   │   ├── ProgramIntf/
-│   │   ├── QueriesIntf/
-│   │   ├── StaticContentIntf/
-│   │   ├── TestIntf/
-│   │   ├── TokenIntf/
-│   │   ├── UserIntf/
-│   ├── Localization/
-│   │   ├── Ratings/
-│   ├── Middlewares/
-│   ├── Services/
-│   │   ├── AffiliateMarketingSvc/
-│   │   ├── AuthenticationSvc/
-│   │   ├── AuthorizationSvc/
-│   │   ├── BaseSvc/
-│   │   ├── ClubSvc/
-│   │   ├── Core/
-│   │   │   ├── Langs/
-│   │   │   └── Messages/
-│   │   ├── EmailSvc/
-│   │   ├── JobServiceSvc/
-│   │   ├── LiveCourseSvc/
-│   │   ├── OTPSvc/
-│   │   ├── PaymentSvc/
-│   │   │   ├── Gateways/
-│   │   ├── PodcastEpisodeSvc/
-│   │   ├── ProgramsSvc/
-│   │   ├── QueriesSvc/
-│   │   ├── StaticContentSvc/
-│   │   ├── TestSvc/
-│   │   ├── TokenSvc/
-│   │   ├── UserSvc/
-│   ├── Tasks/
-└── Lumora.Web/
-├── Connected Services/
-├── Dependencies/
-├── Properties/
-│   └── PublishProfiles/
-├── Controllers/
-│   ├── AffiliateMarketingAPI/
-│   ├── AuthenticationAPI/
-│   │   ├── Admin/
-│   ├── AuthorizationAPI/
-│   ├── ClubAPI/
-│   │   └── Admin/
-│   ├── EmailAPI/
-│   ├── JobAPI/
-│   │   ├── Admin/
-│   ├── LiveCourseAPI/
-│   │   ├── Admin/
-│   ├── LocalizationAPI/
-│   ├── PaymentAPI/
-│   ├── PodcastEpisodeAPI/
-│   │   ├── Admin/
-│   ├── ProgramsAPI/
-│   │   ├── Admin/
-│   ├── StaticContentAPI/
-│   ├── TestAPI/
-│   │   ├── Admin/
-├── Extensions/
-├── Filters/
-├── Migrations/
-├── Resources/
-├── Validations/
-│   ├── AuthenticationVal/
-│   ├── AuthorizationVal/
-│   ├── BaseVal/
-│   ├── ClubVal/
-│   ├── Customer/
-│   ├── JobVal/
-│   ├── LiveCourseValidators/
-│   ├── PodcastEpisodeVal/
-│   ├── ProgramVal/
-│   ├── TestVal/
+	plugins/
+		Lumora.Plugin.Sms/
+			Dependencies/
+			Configuration/
+			Controllers/
+			DTOs/
+			Exceptions/
+			Interfaces/
+			Services/
+			Tasks/
+
+Lumora.Core/
+	Configuration/
+    Data/
+    DataAnnotations/
+	Elastic/
+	Entities/
+	Enums/
+	Exceptions/
+	Extensions/
+	Formatters/
+	Geography/
+	Helpers/
+	Identity/
+	Infrastructure/
+	Interfaces/
+	Localization/
+	Middlewares/
+	Services/
+	Tasks/
+
+Lumora.Web/
+	Dependencies/
+	Properties/
+	Controllers/
+	Extensions/
+	Filters/
+	Migrations/
+	Resources/
+	Validations/
 
 ### Prerequisites
 .NET 8 SDK or later
 PostgreSQL
 Package managers: NuGet
 
-###Install dependencies:
+### Install dependencies:
 dotnet restore
 Set up the database:
 dotnet ef database update
 Run the project:
 dotnet run
 
-###Development
+### Development
 Service Separation: Each module (Subscription, Course, Payment) is independent for maintainability.
 Custom DTOs per Module: Simplifies data transfer between layers.
 MemoryCache / Caching: Improves performance for content retrieval.
 Localization: Supports both English and Arabic messages.
 Logging & Error Handling: Professional logging for easy issue tracking.
 
-###Security
+### Security
 Role-based user and permission management.
 Sensitive data protection via environment files (User Secrets / .env).
 Secure API endpoints using JWT Tokens or Identity Server.
 
-###Future Expansion
+### Future Expansion
 Add additional languages.
 Integrate AI/Chatbot to assist users.
 Expand the subscription and digital products system.
 
-###Contributors
+### Contributors
 Lead Developer: Abdulmoneim Omar Alward
 Future contributors can be added following professional standards.
 
-###License
+### License
 This project is personally owned by the developer and can be reused for personal or commercial purposes while respecting author rights.
