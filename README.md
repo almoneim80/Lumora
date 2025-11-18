@@ -86,15 +86,25 @@ Lumora.sln
 ```bash
 git clone https://github.com/username/lumora.git
 cd lumora
+```
 
-Restore dependencies:
+2. Restore dependencies:
+```
 dotnet restore
-Update database connection strings in appsettings.json.
-Apply migrations:
+```
+
+3. Update database connection strings in appsettings.json.
+4. Apply migrations:
+```
 dotnet ef database update --project src/Lumora.Core
-Run the API:
+```
+
+5. Run the API:
+```
 dotnet run --project src/Lumora.Web
-Access API via https://localhost:5001 (or configured port).
+```
+
+6. Access API via https://localhost:5001 (or configured port).
 
 ---
 
