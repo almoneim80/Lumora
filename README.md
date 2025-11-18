@@ -97,18 +97,18 @@ dotnet run --project src/Lumora.Web
 Access API via https://localhost:5001 (or configured port).
 
 
-## Usage
+### Usage
 All APIs follow REST conventions.
 Authentication required for secured endpoints.
 Admin APIs available for management tasks: user, course, job, and payment management.
 Plugin system allows adding features like SMS, email, and AI-based services.
 
-## Contributing
+### Contributing
 Fork the repository.
 Create a feature branch: git checkout -b feature-name
 Commit your changes: git commit -m "Description"
 Push to the branch: git push origin feature-name
 Open a Pull Request.
 
-## License
+### License
 This project is proprietary / MIT License (choose based on your preference).
