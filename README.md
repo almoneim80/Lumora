@@ -1,107 +1,156 @@
-<Lumora>
+Lumora Platform
 
-<Lumora> is a comprehensive educational and social platform designed to empower users to learn, track progress, 
-and manage courses and content professionally, with support for subscriptions, payments, social interaction, and administrative tasks.
+Lumora is a comprehensive web-based learning and career platform built with .NET 8. It combines educational content, AI-driven automation, career services, and social interaction to provide a seamless experience for learners and professionals.
 
-###  Key Features
-Course and Learning Program Management
-Supports multiple course types: Online, Path-based, Skill Library.
-Manage lessons, exercises, tests, and user progress tracking.
-Subscription and Payment System
-Support for creating and renewing subscriptions.
-Link payments to subscriptions and purchases.
-Dynamic Content Management
-Supports static and dynamic content (text, images, files).
-Database-driven content updates without changing code.
-Consultation and Support System
-Manage counselors, bookings, and tickets.
-Messaging and attachments for professional communication.
-Diverse Purchase System
-Supports purchasing courses, certificates, consultations, and other digital products.
-Handles refunds and detailed purchase statistics.
-Reports and Analytics
-Track user progress.
-Comprehensive analytics for admins and supervisors.
-Professional Design and Scalability
-Extensible architecture.
-Localization support (multi-language).
-Clear and organized folder structure.
+Features
 
-### Folder Structure
-Lumora/
-	plugins/
-		Lumora.Plugin.Sms/
-			Dependencies/
-			Configuration/
-			Controllers/
-			DTOs/
-			Exceptions/
-			Interfaces/
-			Services/
-			Tasks/
+Learning Management
 
-Lumora.Core/
-	Configuration/
-    Data/
-    DataAnnotations/
-	Elastic/
-	Entities/
-	Enums/
-	Exceptions/
-	Extensions/
-	Formatters/
-	Geography/
-	Helpers/
-	Identity/
-	Infrastructure/
-	Interfaces/
-	Localization/
-	Middlewares/
-	Services/
-	Tasks/
+Training paths (Programs) consisting of multiple courses.
 
-Lumora.Web/
-	Dependencies/
-	Properties/
-	Controllers/
-	Extensions/
-	Filters/
-	Migrations/
-	Resources/
-	Validations/
+Each course includes lessons, attachments, tests, and completion certificates.
 
-### Prerequisites
-.NET 8 SDK or later
-PostgreSQL
-Package managers: NuGet
+Support for live courses via video conferencing (free or paid).
 
-### Install dependencies:
+AI-assisted course content creation including lesson files, translations, test generation, and automated grading.
+
+Career Services
+
+Job listings and application system integrated within the platform.
+
+AI-driven interview scheduling with notifications.
+
+Video interviews via popular platforms like Zoom, Google Meet, or built-in solutions.
+
+Payments & Subscriptions
+
+Supports multiple payment gateways such as Tabby, Tamara, and PayTabs.
+
+Flexible subscription and purchase management.
+
+Community & Engagement
+
+Tourist Club: Social hub for sharing ideas and posts.
+
+Podcast publishing support.
+
+Affiliate marketing system integrated.
+
+User Management & Security
+
+Supports multiple authentication methods: Google, Apple, email, phone number.
+
+Full authorization and role management with granular permissions.
+
+2FA, OTP verification, token-based authentication (access + refresh tokens).
+
+Supports over 100 languages and strict security standards.
+
+Complete profile and account management.
+
+Communication
+
+Flexible support for SMS and Email notifications.
+
+Integration with OpenAI API and Div.ai for AI-based tasks.
+
+Extensibility
+
+Plugin architecture (e.g., SMS plugin shown in the project structure).
+
+Easily extendable services and controllers.
+
+Comprehensive API endpoints for all modules.
+
+Project Structure
+Lumora.sln
+│
+├── plugins/
+│   └── Lumora.Plugin.Sms/      # SMS plugin implementation
+├── src/
+│   ├── Lumora.Core/            # Core services, entities, DTOs, helpers
+│   ├── Lumora.Web/             # API project with controllers, filters, middlewares
+│   └── Tasks/                  # Background task implementations
+└── README.md                   # Project documentation
+
+
+Lumora.Core: Core business logic, entities, DTOs, services, plugins, integrations.
+
+Lumora.Web: REST API controllers, authentication, authorization, admin and user APIs.
+
+Plugins: Extendable modules like SMS or custom integrations.
+
+Tasks: Background operations and automation tasks.
+
+Technology Stack
+
+Backend: .NET 8, C#
+
+Database: PostgreSQL, ElasticSearch
+
+Authentication: Identity, JWT, 2FA, OAuth (Google, Apple)
+
+Payments: Tabby, Tamara, PayTabs
+
+AI Integration: OpenAI API, Div.ai
+
+Frontend: Separate SPA or client-side application can consume API
+
+Messaging: Flexible email/SMS provider support
+
+Localization: Multi-language support (100+ languages)
+
+Security: OTP verification, encryption, access & refresh tokens, authorization & roles
+
+Setup Instructions
+
+Clone the repository:
+
+git clone https://github.com/username/lumora.git
+cd lumora
+
+
+Restore dependencies:
+
 dotnet restore
-Set up the database:
-dotnet ef database update
-Run the project:
-dotnet run
 
-### Development
-Service Separation: Each module (Subscription, Course, Payment) is independent for maintainability.
-Custom DTOs per Module: Simplifies data transfer between layers.
-MemoryCache / Caching: Improves performance for content retrieval.
-Localization: Supports both English and Arabic messages.
-Logging & Error Handling: Professional logging for easy issue tracking.
 
-### Security
-Role-based user and permission management.
-Sensitive data protection via environment files (User Secrets / .env).
-Secure API endpoints using JWT Tokens or Identity Server.
+Update database connection strings in appsettings.json.
 
-### Future Expansion
-Add additional languages.
-Integrate AI/Chatbot to assist users.
-Expand the subscription and digital products system.
+Apply migrations:
 
-### Contributors
-Lead Developer: Abdulmoneim Omar Alward
-Future contributors can be added following professional standards.
+dotnet ef database update --project src/Lumora.Core
 
-### License
-This project is personally owned by the developer and can be reused for personal or commercial purposes while respecting author rights.
+
+Run the API:
+
+dotnet run --project src/Lumora.Web
+
+
+Access API via https://localhost:5001 (or configured port).
+
+Usage
+
+All APIs follow REST conventions.
+
+Authentication required for secured endpoints.
+
+Admin APIs available for management tasks such as user, course, job, and payment management.
+
+Plugin system allows adding features like SMS, email, and AI-based services.
+
+Contributing
+
+Fork the repository.
+
+Create a feature branch: git checkout -b feature-name
+
+Commit your changes: git commit -m "Description"
+
+Push to the branch: git push origin feature-name
+
+Open a Pull Request.
+
+License
+
+This project is proprietary / MIT License (choose based on your preference).
