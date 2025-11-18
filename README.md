@@ -96,6 +96,8 @@ Run the API:
 dotnet run --project src/Lumora.Web
 Access API via https://localhost:5001 (or configured port).
 
+---
+
 
 ### Usage
 All APIs follow REST conventions.
