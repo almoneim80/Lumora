@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34408.163
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumora.Web", "Lumora.Web\Lumora.Web.csproj", "{0892CD7C-F798-44B3-8A39-971BEBFCCC20}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{22DD69C3-101E-4B01-ADDA-F568C9FA4B1D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumora.Plugin.Sms", "plugins\Lumora.Plugin.Sms\Lumora.Plugin.Sms.csproj", "{DF2FE238-79B4-412C-9FD7-4C139BCE995A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumora.Domain", "Lumora.Domain\Lumora.Domain.csproj", "{428B49D6-5C20-4323-81AA-81BF96099EDA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumora.Application", "Lumora.Application\Lumora.Application.csproj", "{C925B0DA-98D3-4403-B1B5-703EB01F4139}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumora.Infrastructure", "Lumora.Infrastructure\Lumora.Infrastructure.csproj", "{6533FBAD-AC3C-4C20-8F6E-265BD00FA531}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0892CD7C-F798-44B3-8A39-971BEBFCCC20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0892CD7C-F798-44B3-8A39-971BEBFCCC20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0892CD7C-F798-44B3-8A39-971BEBFCCC20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0892CD7C-F798-44B3-8A39-971BEBFCCC20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF2FE238-79B4-412C-9FD7-4C139BCE995A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF2FE238-79B4-412C-9FD7-4C139BCE995A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF2FE238-79B4-412C-9FD7-4C139BCE995A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF2FE238-79B4-412C-9FD7-4C139BCE995A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{428B49D6-5C20-4323-81AA-81BF96099EDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{428B49D6-5C20-4323-81AA-81BF96099EDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{428B49D6-5C20-4323-81AA-81BF96099EDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{428B49D6-5C20-4323-81AA-81BF96099EDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C925B0DA-98D3-4403-B1B5-703EB01F4139}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C925B0DA-98D3-4403-B1B5-703EB01F4139}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C925B0DA-98D3-4403-B1B5-703EB01F4139}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C925B0DA-98D3-4403-B1B5-703EB01F4139}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6533FBAD-AC3C-4C20-8F6E-265BD00FA531}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6533FBAD-AC3C-4C20-8F6E-265BD00FA531}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6533FBAD-AC3C-4C20-8F6E-265BD00FA531}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6533FBAD-AC3C-4C20-8F6E-265BD00FA531}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DF2FE238-79B4-412C-9FD7-4C139BCE995A} = {22DD69C3-101E-4B01-ADDA-F568C9FA4B1D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {337546FB-4C76-4EC4-BC2D-89C5B442912A}
+	EndGlobalSection
+EndGlobal

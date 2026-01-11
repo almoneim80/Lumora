@@ -1,0 +1,252 @@
+﻿namespace Lumora.Infrastructure.Services.ExternalServices.Network
+{
+    public class WebCheckerService : IWebCheckerService
+    {
+        private static HashSet<string> freeDomains = InitDomainsList("free_domains.txt");
+        private static HashSet<string> disposableDomains = InitDomainsList("disposable_domains.txt");
+        private readonly LookupClient lookupClient;
+
+        public WebCheckerService()
+        {
+            lookupClient = new LookupClient(new LookupClientOptions
+            {
+                UseCache = true,
+                Timeout = new TimeSpan(0, 0, 60),
+            });
+        }
+        public void VerifyFreeAndDisposable(WebDomain domain)
+        {
+            if (domain.Free == null || domain.Disposable == null)
+            {
+                domain.Free = freeDomains.Contains(domain.Name);
+
+                domain.Disposable = disposableDomains.Contains(domain.Name);
+            }
+        }
+        public async Task VerifyDns(WebDomain domain)
+        {
+            domain.DnsRecords = null;
+            domain.DnsCheck = false;
+
+            var result = await lookupClient.QueryAsync(domain.Name, QueryType.ANY);
+
+            var dnsRecords = GetDnsRecords(result, domain);
+
+            if (dnsRecords.Count > 0)
+            {
+                domain.DnsCheck = true;
+                domain.DnsRecords = dnsRecords;
+            }
+        }
+        public async Task<IEnumerable<string>> GetMxRecordsAsync(string domainName)
+        {
+            var mxRecords = await lookupClient.QueryAsync(domainName, QueryType.MX);
+
+            return mxRecords.AllRecords
+                .OfType<MxRecord>()
+                .OrderBy(r => r.Preference)
+                .Select(r => r.Exchange.Value);
+        }
+        public async Task VerifyHttp(WebDomain domain)
+        {
+            domain.HttpCheck = false;
+
+            var urls = new string[]
+            {
+        "https://" + domain.Name,
+        "https://www." + domain.Name,
+        "http://" + domain.Name,
+        "http://www." + domain.Name,
+            };
+
+            foreach (var url in urls)
+            {
+                var response = await GetRequest(url);
+
+                if (response != null && response.RequestMessage != null && response.RequestMessage.RequestUri != null && response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    domain.HttpCheck = true;
+
+                    domain.Url = response.RequestMessage.RequestUri.ToString();
+                    var htmlDoc = new HtmlDocument();
+                    var contentStream = await response.Content.ReadAsStreamAsync();
+                    if (contentStream.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    htmlDoc.Load(contentStream);
+
+                    var title = GetTitle(htmlDoc);
+                    var description = GetDescription(htmlDoc);
+                    domain.Title = title != null ? HtmlEntity.DeEntitize(title) : null;
+                    domain.Description = description != null ? HtmlEntity.DeEntitize(description) : null;
+
+                    break;
+                }
+            }
+        }
+
+        // private 
+        private static HashSet<string> InitDomainsList(string filename)
+        {
+            var res = new HashSet<string>();
+
+            var asm = Assembly.GetExecutingAssembly();
+            var resourcePath = asm.GetManifestResourceNames().Single(str => str.EndsWith(filename));
+
+            if (resourcePath == null)
+            {
+                throw new FileNotFoundException(filename);
+            }
+
+            using (var rsrcStream = asm.GetManifestResourceStream(resourcePath))
+            {
+                if (rsrcStream == null)
+                {
+                    throw new FileNotFoundException(filename);
+                }
+                else
+                {
+                    using (var sRdr = new StreamReader(rsrcStream))
+                    {
+                        string? line = null;
+                        while ((line = sRdr.ReadLine()) != null)
+                        {
+                            res.Add(line);
+                        }
+                    }
+                }
+            }
+
+            return res;
+        }
+        private List<DnsRecord> GetDnsRecords(IDnsQueryResponse dnsQueryResponse, WebDomain d)
+        {
+            var dnsRecords = new List<DnsRecord>();
+
+            foreach (var dnsResponseRecord in dnsQueryResponse.AllRecords)
+            {
+                try
+                {
+                    var dnsRecord = new DnsRecord
+                    {
+                        DomainName = dnsResponseRecord.DomainName.Value,
+                        RecordClass = dnsResponseRecord.RecordClass.ToString(),
+                        RecordType = dnsResponseRecord.RecordType.ToString(),
+                        TimeToLive = dnsResponseRecord.TimeToLive,
+                    };
+
+                    switch (dnsResponseRecord)
+                    {
+                        case ARecord a:
+                            if (dnsRecord.DomainName != d.Name + ".")
+                            {
+                                // we are only interested in an A record for the main domain
+                                continue;
+                            }
+
+                            dnsRecord.Value = a.Address.ToString();
+                            break;
+                        case CNameRecord cname:
+                            dnsRecord.Value = cname.CanonicalName.Value;
+                            break;
+                        case MxRecord mx:
+                            dnsRecord.Value = mx.Exchange.Value;
+                            break;
+                        case TxtRecord txt:
+                            dnsRecord.Value = string.Concat(txt.Text);
+                            break;
+                        case NsRecord ns:
+                            dnsRecord.Value = ns.NSDName.Value;
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    dnsRecords.Add(dnsRecord);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error reading DNS record.");
+                }
+            }
+
+            return dnsRecords;
+        }
+        private async Task<HttpResponseMessage?> GetRequest(string url)
+        {
+            var client = new HttpClient();
+
+            try
+            {
+                var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+                return await client.SendAsync(request);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        private string? GetTitle(HtmlDocument htmlDoc)
+        {
+            var htmlNode = htmlDoc.DocumentNode.SelectSingleNode("//title");
+
+            if (htmlNode != null && !string.IsNullOrEmpty(htmlNode.InnerText))
+            {
+                return htmlNode.InnerText;
+            }
+
+            var title = GetNodeContentByAttr(htmlDoc, "title");
+
+            if (!string.IsNullOrEmpty(title))
+            {
+                return title;
+            }
+
+            htmlNode = htmlDoc.DocumentNode.SelectSingleNode("//h1");
+
+            if (htmlNode != null && !string.IsNullOrEmpty(htmlNode.InnerText))
+            {
+                return htmlNode.InnerText;
+            }
+
+            return null;
+        }
+        private string? GetDescription(HtmlDocument htmlDoc)
+        {
+            return GetNodeContentByAttr(htmlDoc, "description");
+        }
+        private string? GetNodeContentByAttr(HtmlDocument htmlDoc, string value)
+        {
+            var result = GetNodeContentByAttr(htmlDoc, "name", value);
+            if (result == null)
+            {
+                result = GetNodeContentByAttr(htmlDoc, "property", value);
+            }
+
+            return result;
+        }
+        private string? GetNodeContentByAttr(HtmlDocument htmlDoc, string attrName, string value)
+        {
+            string? GetNodeContent(HtmlDocument htmlDoc, string attrName, string value)
+            {
+                var htmlNode = htmlDoc.DocumentNode.SelectSingleNode($"//meta[@{attrName}='{value}']");
+                if (htmlNode != null && htmlNode.Attributes.Contains("content"))
+                {
+                    return htmlNode.GetAttributeValue("content", string.Empty);
+                }
+
+                return null;
+            }
+
+            var res = GetNodeContent(htmlDoc, attrName, value);
+            if (res == null)
+            {
+                res = GetNodeContent(htmlDoc, attrName, "og:" + value);
+            }
+
+            return res;
+        }
+    }
+}

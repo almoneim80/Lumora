@@ -1,0 +1,82 @@
+﻿using Lumora.Application.Interfaces.AuthorizationIntf;
+
+namespace Lumora.Infrastructure.Repositories
+{
+    public class RoleRepository : IRoleRepository
+    {
+        private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+
+        public RoleRepository(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+        {
+            _roleManager = roleManager;
+            _userManager = userManager;
+        }
+
+        public async Task<bool> RoleExistsAsync(string roleName)
+            => await _roleManager.RoleExistsAsync(roleName);
+
+        public async Task<OperationResult> CreateRoleAsync(AppRole roleName)
+        {
+            var identityRole = new IdentityRole(roleName.Name);
+            var result = await _roleManager.CreateAsync(identityRole);
+            return MapToOperationResult(result);
+        }
+
+        public async Task<AppRole?> FindRoleByNameAsync(AppRole roleName)
+        {
+            var identityRole = await _roleManager.FindByNameAsync(roleName.Name);
+            if (identityRole == null) return null;
+
+            return new AppRole { Name = identityRole.Name!, Id = identityRole.Id };
+        }
+
+        public async Task<OperationResult> DeleteRoleAsync(AppRole roleName)
+        {
+            var identityRole = new IdentityRole(roleName.Name);
+            var result = await _roleManager.DeleteAsync(identityRole);
+            return MapToOperationResult(result);
+        }
+
+        public async Task<OperationResult> UpdateRoleAsync(AppRole roleName)
+        {
+            var identityRole = new IdentityRole(roleName.Name);
+            var result = await _roleManager.UpdateAsync(identityRole);
+            return MapToOperationResult(result);
+        }
+
+        public async Task<OperationResult> AddToRoleAsync(User user, string roleName)
+        {
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+            return MapToOperationResult(result);
+        }
+
+        public async Task<OperationResult> RemoveFromRoleAsync(User user, string roleName)
+        {
+            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+            return MapToOperationResult(result);
+        }
+
+        public async Task<IList<User>> GetUsersInRoleAsync(string roleName)
+            => await _userManager.GetUsersInRoleAsync(roleName);
+
+        public async Task<IList<string>> GetUserRolesAsync(User user)
+            => await _userManager.GetRolesAsync(user);
+
+        public async Task<bool> IsInRoleAsync(User user, string roleName)
+            => await _userManager.IsInRoleAsync(user, roleName);
+
+        public async Task<List<string>> GetAllRoleNamesAsync(CancellationToken cancellationToken)
+            => await _roleManager.Roles.Select(r => r.Name!).ToListAsync(cancellationToken);
+
+        /// <summary>
+        /// وظيفة مساعدة لتحويل نتيجة Identity إلى نتيجة التطبيق الخاصة بنا.
+        /// </summary>
+        private static OperationResult MapToOperationResult(IdentityResult result)
+        {
+            return result.Succeeded
+                ? OperationResult.Success()
+                : OperationResult.Failed(result.Errors.Select(e => e.Description).ToArray());
+        }
+    }
+}

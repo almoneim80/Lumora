@@ -1,0 +1,30 @@
+﻿{
+  "SmsAccessKey": "",
+  "SmsGateways": {
+    "Msegat": {
+      "ApiUrl": "https://www.msegat.com/gw/sendsms.php",
+      "SenderId": "",
+      "UserName": "",
+      "ApiKey": "",
+      "VerifyOtpUrl": "https://www.msegat.com/gw/verifyOTPCode.php"
+    },
+    "Twilio": {
+      "AccountSid": "",
+      "AuthToken": "",
+      "FromNumber": ""
+    }
+  },
+  "SmsCountryGateways": [
+    {
+      "Code": "default",
+      "Gateway": "Msegat"
+    },
+    {
+      "Code": "+1",
+      "Gateway": "Twilio"
+    }
+  ],
+  "OtpOptions": {
+    "ExpireInMinutes": 5
+  }
+}

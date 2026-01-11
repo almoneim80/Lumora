@@ -1,0 +1,6 @@
+﻿namespace Lumora.Domain.Interfaces
+{
+    internal interface IFileStream
+    {
+    }
+}

@@ -1,0 +1,131 @@
+Folder PATH listing
+Volume serial number is AC86-7D39
+E:.
+|   .gitignore
+|   main.py
+|   main.spec
+|   README.md
+|   __init__.py
+|   
++---.idea
+|   |   .gitignore
+|   |   baligh.iml
+|   |   misc.xml
+|   |   modules.xml
+|   |   vcs.xml
+|   |   workspace.xml
+|   |   
+|   \---inspectionProfiles
+|           profiles_settings.xml
+|           
++---build
+|   \---main
+|       |   Analysis-00.toc
+|       |   base_library.zip
+|       |   EXE-00.toc
+|       |   main.pkg
+|       |   PKG-00.toc
+|       |   PYZ-00.pyz
+|       |   PYZ-00.toc
+|       |   warn-main.txt
+|       |   xref-main.html
+|       |   
+|       \---localpycs
+|               pyimod01_archive.pyc
+|               pyimod02_importers.pyc
+|               pyimod03_ctypes.pyc
+|               pyimod04_pywin32.pyc
+|               struct.pyc
+|               
++---config
+|       active_model.json
+|       
++---core
+|   |   translation_engine.py
+|   |   translation_rules.py
+|   |   translation_service.py
+|   |   __init__.py
+|   |   
+|   \---__pycache__
+|           __init__.cpython-312.pyc
+|           
++---infrastructure
+|       download_manager.py
+|       file_manager.py
+|       quantization_tools.py
+|       __init__.py
+|       
++---interfaces
++---Localization
+|       en.json
+|       
++---models
+|   \---facebooknllb-200-distilled-600M
+|           config.json
+|           generation_config.json
+|           pytorch_model.bin
+|           sentencepiece.bpe.model
+|           special_tokens_map.json
+|           tokenizer.json
+|           tokenizer_config.json
+|           
++---resources
+|   \---icons
+|           circle-chevron.svg
+|           circle-xmark-solid-full.svg
+|           copy-solid-full.svg
+|           ellipsis.svg
+|           hide.svg
+|           icon.png
+|           
++---services
+|   |   cache_service.py
+|   |   clipboard_service.py
+|   |   config_loader.py
+|   |   config_service.py
+|   |   keyboard_service.py
+|   |   localization_service.py
+|   |   model_loader.py
+|   |   __init__.py
+|   |   
+|   \---__pycache__
+|           clipboard_service.cpython-312.pyc
+|           config_loader.cpython-312.pyc
+|           keyboard_service.cpython-312.pyc
+|           localization_service.cpython-312.pyc
+|           __init__.cpython-312.pyc
+|           
++---temp
++---ui
+|   |   main_window.py
+|   |   ui_constants.py
+|   |   ui_layout_setup.py
+|   |   ui_styles.py
+|   |   ui_tray_setup.py
+|   |   ui_window_setup.py
+|   |   window_animator.py
+|   |   __init__.py
+|   |   
+|   \---__pycache__
+|           main_window.cpython-312.pyc
+|           popup_card.cpython-312.pyc
+|           translator_popup.cpython-312.pyc
+|           tray_test.cpython-312.pyc
+|           ui_constants.cpython-312.pyc
+|           ui_layout_setup.cpython-312.pyc
+|           ui_styles.cpython-312.pyc
+|           ui_tray_setup.cpython-312.pyc
+|           ui_window_setup.cpython-312.pyc
+|           window_animator.cpython-312.pyc
+|           __init__.cpython-312.pyc
+|           
++---utils
+|       helpers.py
+|       localization.py
+|       logger.py
+|       __init__.py
+|       
+\---__pycache__
+        main.cpython-312.pyc
+        __init__.cpython-312.pyc
+        

@@ -1,0 +1,996 @@
+Folder PATH listing
+Volume serial number is AC86-7D39
+E:.
+|   .deepsource.toml
+|   .editorconfig
+|   .gitignore
+|   CodeAnalysis.ruleset
+|   Directory.Build.targets
+|   Lumora.sln
+|   project_structure.txt
+|   README.md
+|   stylecop.json
+|   
++---plugins
+|   \---Lumora.Plugin.Sms
+|       |   Lumora.Plugin.Sms.csproj
+|       |   Lumora.Plugin.Sms.sln
+|       |   pluginsettings.json
+|       |   SmsPlugin.cs
+|       |   Using.cs
+|       |   
+|       +---Configuration
+|       |       PluginSettings.cs
+|       |       
+|       +---Controllers
+|       |       MessagesController.cs
+|       |       SmsTemplateController.cs
+|       |       
+|       +---DTOs
+|       |       OTPDtos.cs
+|       |       SmsDtos.cs
+|       |       
+|       +---Exceptions
+|       |       MsegatException.cs
+|       |       SMSPluginException.cs
+|       |       UnknownCountryCodeException.cs
+|       |       
+|       +---Interfaces
+|       |       IOtpService.cs
+|       |       ISmsService.cs
+|       |       
+|       +---Properties
+|       +---Services
+|       |       MsegatSmsService.cs
+|       |       SmsOtpService.cs
+|       |       SmsService.cs
+|       |       TwilioSmsService.cs
+|       |       
+|       \---Tasks
+|               SyncSmsLogTask.cs
+|               
+\---src
+    +---Lumora.Core
+    |   |   Lumora.Core.csproj
+    |   |   Usings.cs
+    |   |   
+    |   +---Configuration
+    |   |   |   AppSettings.cs
+    |   |   |   AutoMapperProfiles.cs
+    |   |   |   RouteToKebabCase.cs
+    |   |   |   SnakeCaseNamingPolicy.cs
+    |   |   |   
+    |   |   \---MappingProfiles
+    |   |           MappingConditions.cs
+    |   |           TrainingProgramProfile.cs
+    |   |           UserProfile.cs
+    |   |           
+    |   +---Data
+    |   |   |   EsDbContext.cs
+    |   |   |   PgDbContext.cs
+    |   |   |   PluginDbContextBase.cs
+    |   |   |   
+    |   |   \---DbSets
+    |   |           PgDbContext.AffiliateMarketing.cs
+    |   |           PgDbContext.Club.cs
+    |   |           PgDbContext.Email.cs
+    |   |           PgDbContext.Jobs.cs
+    |   |           PgDbContext.LiveCourse.cs
+    |   |           PgDbContext.Logs.cs
+    |   |           PgDbContext.Payment.cs
+    |   |           PgDbContext.PodcastEpisode.cs
+    |   |           PgDbContext.Programs.cs
+    |   |           PgDbContext.StaticContent.cs
+    |   |           PgDbContext.Test.cs
+    |   |           
+    |   +---DataAnnotations
+    |   |       CurrencyCodeAttribute.cs
+    |   |       CustomEmailAttribute.cs
+    |   |       DateGreaterThanAttribute.cs
+    |   |       FileExtensionAttribute.cs
+    |   |       FileExtensionValidateAttribute.cs
+    |   |       LanguageCodeAttribute.cs
+    |   |       MediaExtensionAttribute.cs
+    |   |       RequiredPermissionAttribute.cs
+    |   |       SearchableAttribute.cs
+    |   |       SuperAdminOnlyAttribute.cs
+    |   |       SupportsChangeLogAttribute.cs
+    |   |       SupportsElasticAttribute.cs
+    |   |       SurrogateForeignKeyAttribute.cs
+    |   |       SurrogateIdentityAttribute.cs
+    |   |       SwaggerExampleAttribute.cs
+    |   |       SwaggerHideAttribute.cs
+    |   |       SwaggerUniqueAttribute.cs
+    |   |       
+    |   +---DTOs
+    |   |   |   AccountDtos.cs
+    |   |   |   ActivityLogDto.cs
+    |   |   |   AttachmentDto.cs
+    |   |   |   BaseImportDtos.cs
+    |   |   |   ContentDtos.cs
+    |   |   |   CultureDto.cs
+    |   |   |   DomainDtos.cs
+    |   |   |   ExamDtos.cs
+    |   |   |   ExamResultDtos.cs
+    |   |   |   FileCreateDtos.cs
+    |   |   |   FileDetailsDtos.cs
+    |   |   |   GoogleUserInfo.cs
+    |   |   |   ImageCreateDto.cs
+    |   |   |   IpDetailsDto.cs
+    |   |   |   LinkDtos.cs
+    |   |   |   MediaDetailsDto.cs
+    |   |   |   NotificationDto.cs
+    |   |   |   OtpViaDto.cs
+    |   |   |   ProgressDto.cs
+    |   |   |   QualificationDtos.cs
+    |   |   |   RefundDto.cs
+    |   |   |   SmsTemplateDto.cs
+    |   |   |   TaskDtos.cs
+    |   |   |   TouristClubDto.cs
+    |   |   |   TouristClubSubscriberDto.cs
+    |   |   |   UnsubscribeDtos.cs
+    |   |   |   VersionDto.cs
+    |   |   |   
+    |   |   +---AffiliateMarketing
+    |   |   |       AffiliateDtos.cs
+    |   |   |       
+    |   |   +---Authentication
+    |   |   |       AuthenticationDtos.cs
+    |   |   |       
+    |   |   +---Authorization
+    |   |   |       PermissionDtos.cs
+    |   |   |       
+    |   |   +---Base
+    |   |   |       BaseDtos.cs
+    |   |   |       
+    |   |   +---Club
+    |   |   |       ClubAmbassadorDtos.cs
+    |   |   |       ClubPostDtos.cs
+    |   |   |       WheelAwardDto.cs
+    |   |   |       WheelPlayerDto.cs
+    |   |   |       
+    |   |   +---Email
+    |   |   |       EmailDtos.cs
+    |   |   |       EmailGroupDtos.cs
+    |   |   |       EmailTemplateDtos.cs
+    |   |   |       
+    |   |   +---Job
+    |   |   |       JobDtos.cs
+    |   |   |       
+    |   |   +---LiveCourse
+    |   |   |       LiveCourseDtos.cs
+    |   |   |       qerz3245.quj~
+    |   |   |       
+    |   |   +---MediaDtos
+    |   |   |       FileCreateDto.cs
+    |   |   |       FileDetailsDto.cs
+    |   |   |       FileDto.cs
+    |   |   |       ImageCreateDto.cs
+    |   |   |       
+    |   |   +---Payment
+    |   |   |       PaymentsDtos.cs
+    |   |   |       
+    |   |   +---Podcast
+    |   |   |       PodcastEpisodeDtos.cs
+    |   |   |       
+    |   |   +---Programs
+    |   |   |       ExerciseAnswerDtos.cs
+    |   |   |       LessonAttachmentDtos.cs
+    |   |   |       LessonDtos.cs
+    |   |   |       ProgramCertificateDtos.cs
+    |   |   |       ProgramCourseDtos.cs
+    |   |   |       ProgramEnrollmentDtos.cs
+    |   |   |       ProgressDtos.cs
+    |   |   |       TrainingProgramDtos.cs
+    |   |   |       
+    |   |   +---StaticContent
+    |   |   |       StaticContentCreateDto.cs
+    |   |   |       
+    |   |   +---Test
+    |   |   |       TestAttemptDtos.cs
+    |   |   |       TestChoiceDtos.cs
+    |   |   |       TestDtos.cs
+    |   |   |       TestQuestionDtos.cs
+    |   |   |       
+    |   |   \---Token
+    |   |           TokenDtos.cs
+    |   |           
+    |   +---Elastic
+    |   |   |   ElasticDbContext.cs
+    |   |   |   ElasticHelper.cs
+    |   |   |   ElasticMigration.cs
+    |   |   |   
+    |   |   \---Migrations
+    |   |           20230131211337_ReIndexDomain.cs
+    |   |           
+    |   +---Entities
+    |   |   |   ActivityLog.cs
+    |   |   |   BaseEntity.cs
+    |   |   |   ChangeLog.cs
+    |   |   |   ChangeLogTaskLog.cs
+    |   |   |   Contact.cs
+    |   |   |   ContactEmailSchedule.cs
+    |   |   |   CountryInfo.cs
+    |   |   |   Domain.cs
+    |   |   |   EmailGroup.cs
+    |   |   |   EmailLog.cs
+    |   |   |   EmailSchedule.cs
+    |   |   |   EmailTemplate.cs
+    |   |   |   File.cs
+    |   |   |   IpDetails.cs
+    |   |   |   LocalizationOption.cs
+    |   |   |   LogRecord.cs
+    |   |   |   MailServer.cs
+    |   |   |   ParentalRating.cs
+    |   |   |   RefreshToken.cs
+    |   |   |   SmsTemplate.cs
+    |   |   |   TaskExecutionLog.cs
+    |   |   |   Unsubscribe.cs
+    |   |   |   UserStatusHistory.cs
+    |   |   |   
+    |   |   \---Tables
+    |   |           ClubAmbassador.cs
+    |   |           ClubPost.cs
+    |   |           ClubPostLike.cs
+    |   |           CourseLesson.cs
+    |   |           Job.cs
+    |   |           JobApplication.cs
+    |   |           LessonAttachment.cs
+    |   |           LessonProgress.cs
+    |   |           LessonSession.cs
+    |   |           LiveCourse.cs
+    |   |           Payment.cs
+    |   |           PaymentItem.cs
+    |   |           PodcastEpisode.cs
+    |   |           ProgramCertificate.cs
+    |   |           ProgramCourse.cs
+    |   |           ProgramEnrollment.cs
+    |   |           PromoCode.cs
+    |   |           PromoCodeUsage.cs
+    |   |           Refund.cs
+    |   |           SmsLog.cs
+    |   |           StaticContent.cs
+    |   |           Test.cs
+    |   |           TestAnswer.cs
+    |   |           TestAttempt.cs
+    |   |           TestChoice.cs
+    |   |           TestQuestion.cs
+    |   |           TraineeProgress.cs
+    |   |           TrainerInfo.cs
+    |   |           TrainingProgram.cs
+    |   |           User.cs
+    |   |           UserLiveCourse.cs
+    |   |           WheelAward.cs
+    |   |           WheelPlayer.cs
+    |   |           WheelPlayerState.cs
+    |   |           
+    |   +---Enums
+    |   |       AffiliateStatus.cs
+    |   |       AwardType.cs
+    |   |       CertificateDeliveryMethod.cs
+    |   |       CertificateStatus.cs
+    |   |       ClubPostStatus.cs
+    |   |       CourseType.cs
+    |   |       EnrollmentStatus.cs
+    |   |       ErrorType.cs
+    |   |       ExamParentEntityType.cs
+    |   |       ExamStatus.cs
+    |   |       FileValidationErrorType.cs
+    |   |       JobApplicationStatus.cs
+    |   |       JobType.cs
+    |   |       LogEvents.cs
+    |   |       MediaType.cs
+    |   |       NotificationType.cs
+    |   |       PaymentGatewayType.cs
+    |   |       PaymentItemType.cs
+    |   |       PaymentPurpose.cs
+    |   |       PaymentStatus.cs
+    |   |       PayoutStatus.cs
+    |   |       ProcessStatus.cs
+    |   |       RatingStatus.cs
+    |   |       RefundStatus.cs
+    |   |       SmsSendStatus.cs
+    |   |       StaticContentMediaType.cs
+    |   |       StaticContentType.cs
+    |   |       VerificationMethod.cs
+    |   |       WorkplaceCategory.cs
+    |   |       
+    |   +---Exceptions
+    |   |       ChangeLogMigrationException.cs
+    |   |       CustomException.cs
+    |   |       EmailException.cs
+    |   |       EntityNotFoundException.cs
+    |   |       IdentityException.cs
+    |   |       InvalidModelStateException.cs
+    |   |       IpDetailsException.cs
+    |   |       LocalizationException.cs
+    |   |       MissingConfigurationException.cs
+    |   |       NonPrimaryNodeException.cs
+    |   |       NotFoundException.cs
+    |   |       PluginDbContextException.cs
+    |   |       PluginDbContextNotFoundException.cs
+    |   |       PluginDbContextTooManyException.cs
+    |   |       QueryException.cs
+    |   |       ServerException.cs
+    |   |       SyncEmailLogTaskException.cs
+    |   |       TaskNotCompletedException.cs
+    |   |       TaskNotFoundException.cs
+    |   |       TaskRunnerDisabledException.cs
+    |   |       TooManyRequestsException.cs
+    |   |       UnauthorizedException.cs
+    |   |       ValidateModelStateAttribute.cs
+    |   |       
+    |   +---Extensions
+    |   |       ControllerExtensions.cs
+    |   |       EntityValidationExtensions.cs
+    |   |       GeneralResultExtensions.cs
+    |   |       IFormFileExtensions.cs
+    |   |       LoggerExtensions.cs
+    |   |       PaginationExtensions.cs
+    |   |       ValidateModelExtensions.cs
+    |   |       
+    |   +---Formatters
+    |   |   \---Csv
+    |   |           CsvClassMapHelper.cs
+    |   |           CsvInputFormatter.cs
+    |   |           CsvOutputFormatter.cs
+    |   |           
+    |   +---Geography
+    |   |       Continent.cs
+    |   |       Country.cs
+    |   |       
+    |   +---Helpers
+    |   |   |   DateTimeHelper.cs
+    |   |   |   EnumHelper.cs
+    |   |   |   FileNameHelper.cs
+    |   |   |   FileValidatorHelper.cs
+    |   |   |   GravatarHelper.cs
+    |   |   |   HttpContextHelper.cs
+    |   |   |   JsonHelper.cs
+    |   |   |   StringHelper.cs
+    |   |   |   TokenHelper.cs
+    |   |   |   TypeHelper.cs
+    |   |   |   UidHelper.cs
+    |   |   |   
+    |   |   \---Customer
+    |   |           UserHelper.cs
+    |   |           
+    |   +---Identity
+    |   |       CustomSignInManager.cs
+    |   |       GoogleCookieEventsHandler.cs
+    |   |       GoogleJwtBearerEventsHandler.cs
+    |   |       
+    |   +---Infrastructure
+    |   |   |   AppRoles.cs
+    |   |   |   CustomSqlServerMigrationsSqlGenerator.cs
+    |   |   |   CustomSwaggerScheme.cs
+    |   |   |   DbContextExtentions.cs
+    |   |   |   DBQueryProvider.cs
+    |   |   |   DictionaryExtensions.cs
+    |   |   |   ESOnlyQueryProviderFactory.cs
+    |   |   |   ESQueryProvider.cs
+    |   |   |   IdentityHelper.cs
+    |   |   |   LockManager.cs
+    |   |   |   MixedQueryProvider.cs
+    |   |   |   PluginLoadContext.cs
+    |   |   |   PluginManager.cs
+    |   |   |   QueryCommand.cs
+    |   |   |   QueryModelBuilder.cs
+    |   |   |   QueryProviderFactory.cs
+    |   |   |   QueryStringParser.cs
+    |   |   |   ResponseHeaderNames.cs
+    |   |   |   TaskRunner.cs
+    |   |   |   
+    |   |   +---PermissionInfra
+    |   |   |       Permissions.cs
+    |   |   |       PermissionsSeeding.cs
+    |   |   |       
+    |   |   \---StaticContentInfra
+    |   |           StaticContentDefaults.cs
+    |   |           StaticContentKeys.cs
+    |   |           StaticContentSeeder.cs
+    |   |           
+    |   +---Interfaces
+    |   |   |   IAccountExternalService.cs
+    |   |   |   IBaseEntity.cs
+    |   |   |   IBaseService.cs
+    |   |   |   IBaseServiceWithoutUpdate.cs
+    |   |   |   ICacheService.cs
+    |   |   |   ICascadeDeleteService.cs
+    |   |   |   IContactService.cs
+    |   |   |   IDomainService.cs
+    |   |   |   IEmailFromTemplateService.cs
+    |   |   |   IEmailSchedulingService.cs
+    |   |   |   IEmailService.cs
+    |   |   |   IEmailValidationExternalService.cs
+    |   |   |   IEmailVerificationExtension.cs
+    |   |   |   IEmailVerificationService.cs
+    |   |   |   IEmailVerifyService.cs
+    |   |   |   IEmailWithLogService.cs
+    |   |   |   IEntityService.cs
+    |   |   |   IExtendedBaseService.cs
+    |   |   |   IExternalAuthProvider.cs
+    |   |   |   IExternalAuthService.cs
+    |   |   |   IHttpContextHelper.cs
+    |   |   |   IIdentityService.cs
+    |   |   |   IImportService.cs
+    |   |   |   ILocalizationManager.cs
+    |   |   |   ILockService.cs
+    |   |   |   IMxVerifyService.cs
+    |   |   |   IPlugin.cs
+    |   |   |   IQueryProvider.cs
+    |   |   |   IRefundService.cs
+    |   |   |   IServerConfigurationManager.cs
+    |   |   |   ISharedData.cs
+    |   |   |   IStudentProgress.cs
+    |   |   |   ISwaggerConfigurator.cs
+    |   |   |   ITask.cs
+    |   |   |   IVariablesProvider.cs
+    |   |   |   IVariablesService.cs
+    |   |   |   
+    |   |   +---AffiliateMarketingIntf
+    |   |   |       IAffiliateService.cs
+    |   |   |       
+    |   |   +---AuthenticationIntf
+    |   |   |       IAuthenticationService.cs
+    |   |   |       
+    |   |   +---AuthorizationIntf
+    |   |   |       IPermissionService.cs
+    |   |   |       IRoleService.cs
+    |   |   |       
+    |   |   +---ClubIntf
+    |   |   |       IAmbassadorService.cs
+    |   |   |       IPostLikeService.cs
+    |   |   |       IPostService.cs
+    |   |   |       IWheelAwardService.cs
+    |   |   |       IWheelPlayerService.cs
+    |   |   |       
+    |   |   +---EmailIntf
+    |   |   |       IEmailConfirmation.cs
+    |   |   |       IEmailSend.cs
+    |   |   |       
+    |   |   +---JobIntf
+    |   |   |       IJobService.cs
+    |   |   |       
+    |   |   +---LiveCourseIntf
+    |   |   |       ILiveCourseService.cs
+    |   |   |       
+    |   |   +---PaymentIntf
+    |   |   |       IPaymentGatewayAdapter.cs
+    |   |   |       IPaymentRepository.cs
+    |   |   |       IPaymentService.cs
+    |   |   |       IPaymentVerifier.cs
+    |   |   |       IRefundRepository.cs
+    |   |   |       
+    |   |   +---PodcastEpisodeIntf
+    |   |   |       IPodcastEpisodeService.cs
+    |   |   |       
+    |   |   +---ProgramIntf
+    |   |   |       ICertificateService.cs
+    |   |   |       ICourseLessonService.cs
+    |   |   |       IEnrollmentService.cs
+    |   |   |       ILessonAttachmentService.cs
+    |   |   |       IProgramCourseService.cs
+    |   |   |       IProgressService.cs
+    |   |   |       ITrainingProgramService.cs
+    |   |   |       
+    |   |   +---PurchaseIntf
+    |   |   +---QueriesIntf
+    |   |   |       IQueryService.cs
+    |   |   |       
+    |   |   +---StaticContentIntf
+    |   |   |       IStaticContentService.cs
+    |   |   |       
+    |   |   +---TestIntf
+    |   |   |       ITestAttemptService.cs
+    |   |   |       ITestChoiceService.cs
+    |   |   |       ITestQuestionService.cs
+    |   |   |       ITestService.cs
+    |   |   |       
+    |   |   +---TokenIntf
+    |   |   |       ITokenService.cs
+    |   |   |       
+    |   |   \---UserIntf
+    |   |           IUserRepository.cs
+    |   |           IUserService.cs
+    |   |           
+    |   +---Localization
+    |   |   |   countries.json
+    |   |   |   iso6392.txt
+    |   |   |   
+    |   |   \---Ratings
+    |   |           0-prefer.csv
+    |   |           au.csv
+    |   |           be.csv
+    |   |           br.csv
+    |   |           ca.csv
+    |   |           co.csv
+    |   |           de.csv
+    |   |           dk.csv
+    |   |           es.csv
+    |   |           fi.csv
+    |   |           fr.csv
+    |   |           gb.csv
+    |   |           ie.csv
+    |   |           jp.csv
+    |   |           kz.csv
+    |   |           mx.csv
+    |   |           nl.csv
+    |   |           no.csv
+    |   |           nz.csv
+    |   |           ro.csv
+    |   |           ru.csv
+    |   |           se.csv
+    |   |           sk.csv
+    |   |           uk.csv
+    |   |           us.csv
+    |   |           
+    |   +---Middlewares
+    |   |       CultureMiddleware.cs
+    |   |       PermissionMiddleware.cs
+    |   |       
+    |   +---Services
+    |   |   |   AccountExternalService.cs
+    |   |   |   ActivityLogService.cs
+    |   |   |   ContactService.cs
+    |   |   |   DomainService.cs
+    |   |   |   EmailFromTemplateService.cs
+    |   |   |   EmailSchedulingService.cs
+    |   |   |   EmailService.cs
+    |   |   |   EmailValidationExternalService.cs
+    |   |   |   EmailVerificationExtensionService.cs
+    |   |   |   EmailVerificationService.cs
+    |   |   |   EmailVerifyService.cs
+    |   |   |   EmailWithLogService.cs
+    |   |   |   GoogleAuthService.cs
+    |   |   |   IdentityService.cs
+    |   |   |   ImportService.cs
+    |   |   |   IpDetailsService.cs
+    |   |   |   LocalizationManager.cs
+    |   |   |   LockService.cs
+    |   |   |   MemoryCacheService.cs
+    |   |   |   MxVerifyService.cs
+    |   |   |   ServerConfigurationManager.cs
+    |   |   |   TaskStatusService.cs
+    |   |   |   ValidationRegistration.cs
+    |   |   |   VariablesService.cs
+    |   |   |   
+    |   |   +---AffiliateMarketingSvc
+    |   |   |       AffiliateService.cs
+    |   |   |       
+    |   |   +---AuthenticationSvc
+    |   |   |       AuthenticationService.cs
+    |   |   |       r3h23o2h.qhi~
+    |   |   |       
+    |   |   +---AuthorizationSvc
+    |   |   |       PermissionService.cs
+    |   |   |       RoleService.cs
+    |   |   |       
+    |   |   +---BaseSvc
+    |   |   |       CascadeDeleteService.cs
+    |   |   |       ExtendedBaseService.cs
+    |   |   |       
+    |   |   +---ClubSvc
+    |   |   |       AmbassadorService.cs
+    |   |   |       PostLikeService.cs
+    |   |   |       PostService.cs
+    |   |   |       WheelAwardService.cs
+    |   |   |       WheelPlayerService.cs
+    |   |   |       
+    |   |   +---Core
+    |   |   |   |   ar.json
+    |   |   |   |   en-US.json
+    |   |   |   |   
+    |   |   |   +---Langs
+    |   |   |   |       ab.json
+    |   |   |   |       af.json
+    |   |   |   |       as.json
+    |   |   |   |       be.json
+    |   |   |   |       bg-BG.json
+    |   |   |   |       bn.json
+    |   |   |   |       ca.json
+    |   |   |   |       chr.json
+    |   |   |   |       cs.json
+    |   |   |   |       cy.json
+    |   |   |   |       da.json
+    |   |   |   |       de.json
+    |   |   |   |       el.json
+    |   |   |   |       en-GB.json
+    |   |   |   |       enm.json
+    |   |   |   |       eo.json
+    |   |   |   |       es-AR.json
+    |   |   |   |       es-MX.json
+    |   |   |   |       es.json
+    |   |   |   |       es_419.json
+    |   |   |   |       es_DO.json
+    |   |   |   |       et.json
+    |   |   |   |       eu.json
+    |   |   |   |       fa.json
+    |   |   |   |       fi.json
+    |   |   |   |       fil.json
+    |   |   |   |       fo.json
+    |   |   |   |       fr-CA.json
+    |   |   |   |       fr.json
+    |   |   |   |       ga.json
+    |   |   |   |       gl.json
+    |   |   |   |       gsw.json
+    |   |   |   |       he.json
+    |   |   |   |       hi.json
+    |   |   |   |       hr.json
+    |   |   |   |       hu.json
+    |   |   |   |       hy.json
+    |   |   |   |       id.json
+    |   |   |   |       is.json
+    |   |   |   |       it.json
+    |   |   |   |       ja.json
+    |   |   |   |       jbo.json
+    |   |   |   |       ka.json
+    |   |   |   |       kab.json
+    |   |   |   |       kk.json
+    |   |   |   |       km.json
+    |   |   |   |       kn.json
+    |   |   |   |       ko.json
+    |   |   |   |       kw.json
+    |   |   |   |       ky.json
+    |   |   |   |       lt-LT.json
+    |   |   |   |       lv.json
+    |   |   |   |       lzh.json
+    |   |   |   |       mk.json
+    |   |   |   |       ml.json
+    |   |   |   |       mn.json
+    |   |   |   |       mr.json
+    |   |   |   |       ms.json
+    |   |   |   |       mt.json
+    |   |   |   |       my.json
+    |   |   |   |       nb.json
+    |   |   |   |       ne.json
+    |   |   |   |       nl.json
+    |   |   |   |       nn.json
+    |   |   |   |       or.json
+    |   |   |   |       pa.json
+    |   |   |   |       pl.json
+    |   |   |   |       pr.json
+    |   |   |   |       pt-BR.json
+    |   |   |   |       pt-PT.json
+    |   |   |   |       pt.json
+    |   |   |   |       ro.json
+    |   |   |   |       ru.json
+    |   |   |   |       si.json
+    |   |   |   |       sk.json
+    |   |   |   |       sl-SI.json
+    |   |   |   |       sn.json
+    |   |   |   |       sq.json
+    |   |   |   |       sr.json
+    |   |   |   |       sv.json
+    |   |   |   |       ta.json
+    |   |   |   |       te.json
+    |   |   |   |       th.json
+    |   |   |   |       tr.json
+    |   |   |   |       ug.json
+    |   |   |   |       uk.json
+    |   |   |   |       ur.json
+    |   |   |   |       ur_PK.json
+    |   |   |   |       uz.json
+    |   |   |   |       vi.json
+    |   |   |   |       zh-CN.json
+    |   |   |   |       zh-HK.json
+    |   |   |   |       zh-TW.json
+    |   |   |   |       zu.json
+    |   |   |   |       
+    |   |   |   \---Messages
+    |   |   |           AffiliateMessage.cs
+    |   |   |           AuthenticationMessage.cs
+    |   |   |           CertificateMessages.cs
+    |   |   |           ClubMessage.cs
+    |   |   |           CourseLessonMessages.cs
+    |   |   |           CourseMessage.cs
+    |   |   |           EnrollmentMessage.cs
+    |   |   |           GeneralMessage.cs
+    |   |   |           JobMessages.cs
+    |   |   |           LessonAttachmentMessage.cs
+    |   |   |           LiveCourseMessage.cs
+    |   |   |           PaymentMessage.cs
+    |   |   |           PermissionMessage.cs
+    |   |   |           PodcastEpisodeMessage.cs
+    |   |   |           ProgressMessage.cs
+    |   |   |           RoleMessages.cs
+    |   |   |           TestMessage.cs
+    |   |   |           TrackingMessage.cs
+    |   |   |           TrainingProgramMessage.cs
+    |   |   |           WheelMessag.cs
+    |   |   |           
+    |   |   +---EmailSvc
+    |   |   |       EmailConfirmationService.cs
+    |   |   |       EmailSendService.cs
+    |   |   |       
+    |   |   +---JobServiceSvc
+    |   |   |       JobService.cs
+    |   |   |       
+    |   |   +---LiveCourseSvc
+    |   |   |       LiveCourseService.cs
+    |   |   |       y5hqf0lh.jsn~
+    |   |   |       
+    |   |   +---OTPSvc
+    |   |   |       OtpService.cs
+    |   |   |       
+    |   |   +---PaymentSvc
+    |   |   |   |   PaymentRepository.cs
+    |   |   |   |   PaymentService.cs
+    |   |   |   |   PaymentVerifierService.cs
+    |   |   |   |   RefundRepository.cs
+    |   |   |   |   
+    |   |   |   \---Gateways
+    |   |   |           MockGatewayAdapter.cs
+    |   |   |           PayTabsAdapter.cs
+    |   |   |           
+    |   |   +---PodcastEpisodeSvc
+    |   |   |       PodcastEpisodeService.cs
+    |   |   |       
+    |   |   +---ProgramsSvc
+    |   |   |       CertificateService.cs
+    |   |   |       CourseLessonService.cs
+    |   |   |       EnrollmentService.cs
+    |   |   |       LessonAttachmentService.cs
+    |   |   |       ProgramCourseService.cs
+    |   |   |       ProgressService.cs
+    |   |   |       TrainingProgramService.cs
+    |   |   |       
+    |   |   +---QueriesScv
+    |   |   |       QueryService.cs
+    |   |   |       
+    |   |   +---StaticContentSvc
+    |   |   |       StaticContentService.cs
+    |   |   |       
+    |   |   +---TestSvc
+    |   |   |       TestAttemptService.cs
+    |   |   |       TestChoiceService.cs
+    |   |   |       TestQuestionService.cs
+    |   |   |       TestService.cs
+    |   |   |       
+    |   |   +---TokenSvc
+    |   |   |       TokenService.cs
+    |   |   |       
+    |   |   \---UserSvc
+    |   |           UserRepository.cs
+    |   |           UserService.cs
+    |   |           
+    |   \---Tasks
+    |           BaseTask.cs
+    |           ChangeLogTask.cs
+    |           ContactScheduledEmailTask.cs
+    |           DomainVerificationTask.cs
+    |           HardDeleteTask.cs
+    |           SyncEmailLogTask.cs
+    |           SyncEsTask.cs
+    |           SyncIpDetailsTask.cs
+    |           SyncProgramProgressTask.cs
+    |           
+    \---Lumora.Web
+        |   appsettings.Development.json
+        |   appsettings.json
+        |   Dockerfile
+        |   Lumora.targets
+        |   Lumora.Web.csproj
+        |   Program.cs
+        |   Usings.cs
+        |   Wejha.Web.csproj.user
+        |   
+        +---Controllers
+        |   |   BaseController.cs
+        |   |   ErrorsController.cs
+        |   |   GeographyController.cs
+        |   |   GoogleController.cs
+        |   |   ImportController.cs
+        |   |   LocksController.cs
+        |   |   LogsController.cs
+        |   |   TasksController.cs
+        |   |   
+        |   +---AffiliateMarketingAPI
+        |   |       AffiliateController.cs
+        |   |       ugk2bzwh.sba~
+        |   |       
+        |   +---AuthenticationAPI
+        |   |   |   AccountManagementController.cs
+        |   |   |   AuthenticatedController.cs
+        |   |   |   AuthenticationController.cs
+        |   |   |   ConfirmationController.cs
+        |   |   |   PasswordManagementController.cs
+        |   |   |   TowFAManagementController.cs
+        |   |   |   
+        |   |   \---Admin
+        |   |           UsersAdminController.cs
+        |   |           
+        |   +---AuthorizationAPI
+        |   |       PermissionsManagementController.cs
+        |   |       RolesManagementController.cs
+        |   |       
+        |   +---ClubAPI
+        |   |   |   AmbassadorController.cs
+        |   |   |   PostController.cs
+        |   |   |   PostLikeController.cs
+        |   |   |   
+        |   |   +---Admin
+        |   |   |       AdminAmbassadorController.cs
+        |   |   |       PostAdminController.cs
+        |   |   |       WheelAdminController.cs
+        |   |   |       
+        |   |   \---Wheel
+        |   |           WheelAwardController.cs
+        |   |           WheelPlayerController.cs
+        |   |           
+        |   +---EmailAPI
+        |   |       DomainsController.cs
+        |   |       EmailController.cs
+        |   |       EmailGroupsController.cs
+        |   |       EmailSendController.cs
+        |   |       EmailTemplatesController.cs
+        |   |       
+        |   +---JobAPI
+        |   |   |   JobController.cs
+        |   |   |   
+        |   |   \---Admin
+        |   |           AdminJobController.cs
+        |   |           
+        |   +---LiveCourseAPI
+        |   |   |   LiveCourseController.cs
+        |   |   |   
+        |   |   \---Admin
+        |   |           LiveCourseAdminController.cs
+        |   |           
+        |   +---LocalizationAPI
+        |   |       LocalizationController.cs
+        |   |       
+        |   +---PaymentAPI
+        |   |       PaymentController.cs
+        |   |       
+        |   +---PodcastEpisodeAPI
+        |   |   |   PodcastEpisodeController.cs
+        |   |   |   
+        |   |   \---Admin
+        |   |           PodcastEpisodeAdminController.cs
+        |   |           
+        |   +---ProgramsAPI
+        |   |   |   CertificateController.cs
+        |   |   |   LessonAttachmentController.cs
+        |   |   |   LessonController.cs
+        |   |   |   ProgramCourseController.cs
+        |   |   |   ProgramEnrollmentController.cs
+        |   |   |   ProgramsManegmentController.cs
+        |   |   |   ProgressController.cs
+        |   |   |   
+        |   |   \---Admin
+        |   |           CertificateAdminController.cs
+        |   |           LessonAdminController.cs
+        |   |           LessonAttachmentAdminController.cs
+        |   |           ProgramCourseAdminController.cs
+        |   |           ProgramEnrollmentAdminController.cs
+        |   |           ProgramManegmentAdminController.cs
+        |   |           
+        |   +---StaticContentAPI
+        |   |       StaticContentController.cs
+        |   |       
+        |   \---TestAPI
+        |       |   TestAttemptController.cs
+        |       |   TestController.cs
+        |       |   
+        |       \---Admin
+        |               TestAdminController.cs
+        |               TestChoiceAdminController.cs
+        |               TestQuestionAdminController.cs
+        |               
+        +---Extensions
+        |       AccountExtensions.cs
+        |       ApiSettingsExtensions.cs
+        |       CacheProfileExtensions.cs
+        |       ControllerExtensions.cs
+        |       CorsExtensions.cs
+        |       EmailExtensions.cs
+        |       IdentityExtensions.cs
+        |       InfrastructureExtensions.cs
+        |       IpDetailsExtensions.cs
+        |       LoggingExtensions.cs
+        |       MediaExtensions.cs
+        |       MigrationExtensions.cs
+        |       QuartzExtensions.cs
+        |       RequestLimitExtensions.cs
+        |       ServiceRegistrationExtensions.cs
+        |       SwaggerExtensions.cs
+        |       TaskExtensions.cs
+        |       ValidationExtensions.cs
+        |       
+        +---Filters
+        |       SwaggerEntitiesFilter.cs
+        |       
+        +---Migrations
+        |       20250714120312_InitMig.cs
+        |       20250714120312_InitMig.Designer.cs
+        |       PgDbContextModelSnapshot.cs
+        |       
+        +---Properties
+        |   |   launchSettings.json
+        |   |   
+        |   \---PublishProfiles
+        |           FolderProfile.pubxml
+        |           FolderProfile.pubxml.user
+        |           
+        +---Resources
+        |       disposable_domains.txt
+        |       free_domains.txt
+        |       
+        \---Validations
+            |   GenericValidator.cs
+            |   NotificationValidator.cs
+            |   QualificationValidator.cs
+            |   RefundValidator.cs
+            |   TouristClubSubscriberValidator.cs
+            |   TouristClubValidator.cs
+            |   
+            +---AuthenticationVal
+            |       ChangePasswordValidator.cs
+            |       ChangePhoneNumberValidator.cs
+            |       CompleteUserDataValidator.cs
+            |       ConfirmEmailValidator.cs
+            |       Enable2FAValidator.cs
+            |       ForgotPasswordValidator.cs
+            |       Login2FAValidator.cs
+            |       LoginValidator.cs
+            |       RegisterValidator.cs
+            |       ResetPasswordValidator.cs
+            |       UserUpdateDtoValidator.cs
+            |       Verify2FAValidator.cs
+            |       
+            +---AuthorizationVal
+            |       AddMultiplePermissionsValidator.cs
+            |       AddPermissionValidator.cs
+            |       RemovePermissionValidator.cs
+            |       
+            +---BaseVal
+            |       PaginationValidator.cs
+            |       
+            +---ClubVal
+            |       AmbassadorAssignValidator.cs
+            |       PostCreateValidator.cs
+            |       PostStatusUpdateValidator.cs
+            |       
+            +---Customer
+            |       UserValidator.cs
+            |       
+            +---JobVal
+            |       JobApplicationCreateValidator.cs
+            |       JobCreateValidator.cs
+            |       JobUpdateValidator.cs
+            |       
+            +---LiveCourseValidators
+            |       LiveCourseCreateValidator.cs
+            |       LiveCourseUpdateValidator.cs
+            |       
+            +---PodcastEpisodeVal
+            |       PodcastEpisodeCreateValidator.cs
+            |       PodcastEpisodeUpdateValidator.cs
+            |       
+            +---ProgramVal
+            |       CourseLessonAttachmentCreateValidator.cs
+            |       CourseLessonAttachmentUpdateValidator.cs
+            |       CourseUpdateValidator.cs
+            |       CourseWithLessonsCreateValidator.cs
+            |       LessonAttachmentCreateValidator.cs
+            |       LessonAttachmentUpdateValidator.cs
+            |       LessonCreateValidator.cs
+            |       LessonReorderValidator.cs
+            |       LessonsWithContentCreateValidator.cs
+            |       LessonUpdateValidator.cs
+            |       ProgramCourseUpdateValidator.cs
+            |       SingleLessonAttachmentCreateValidator.cs
+            |       SubmitAnswerValidator.cs
+            |       TrainingProgramCreateValidator.cs
+            |       TrainingProgramUpdateValidator.cs
+            |       TrainingProgressCreateValidator.cs
+            |       
+            \---TestVal
+                    RelatedTestChoiceCreateValidator.cs
+                    RelatedTestChoiceUpdateValidator.cs
+                    RelatedTestQuestionCreateValidator.cs
+                    RelatedTestQuestionUpdateValidator.cs
+                    TestCreateValidator.cs
+                    TestUpdateValidator.cs
+                    
